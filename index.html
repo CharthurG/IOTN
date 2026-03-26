@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indian Ocean Trade Simulation</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<audio id="snd-ocean" src="oceanwaves.mp3" preload="auto"></audio>
+<audio id="snd-coin" src="coinsound.mp3" preload="auto"></audio>
+<audio id="snd-music" src="loopingmusic.mp3" preload="auto" loop></audio>
+<audio id="snd-dice" src="diceroll.mp3" preload="auto"></audio>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:#f0c040;--dkgold:#a07010;--ocean:#071428;--deep:#030c18;
+  --green:#3cd060;--red:#e04848;--yellow:#f0d040;--text:#e8d080;
+  --dim:#806020;--panel:#0d1f38;--border:#2a4a70;
+}
+body{
+  background:var(--deep);color:var(--text);
+  font-family:'Press Start 2P','Courier New',monospace;
+  font-size:11px;line-height:1.8;
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;padding:10px 6px;
+}
+#hud{
+  width:100%;max-width:820px;background:var(--panel);
+  border:2px solid var(--border);padding:8px 12px;
+  display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;
+  margin-bottom:8px;font-size:9px;
+}
+.hud-item{display:flex;flex-direction:column;gap:3px;}
+.hud-label{color:var(--dim);font-size:8px;}
+.hud-val{color:var(--gold);}
+#game{width:100%;max-width:820px;}
+.screen{display:none;}
+.screen.active{display:block;}
+
+/* MAP */
+#map-wrap{position:relative;width:100%;border:3px solid var(--border);overflow:hidden;}
+.port-label{font-family:'Press Start 2P',monospace;font-size:9px;fill:#f0c040;pointer-events:none;text-shadow:1px 1px #000;}
+#ship{transition:all 1.8s ease-in-out;}
+
+/* PANELS */
+.panel{background:var(--panel);border:2px solid var(--border);padding:16px;margin-bottom:10px;}
+.panel-title{color:var(--gold);font-size:13px;margin-bottom:14px;text-align:center;text-shadow:2px 2px var(--dkgold);letter-spacing:1px;}
+.panel-subtitle{color:var(--dim);font-size:9px;margin-bottom:12px;text-align:center;}
+
+/* BUTTONS */
+.btn{
+  display:inline-block;background:var(--dkgold);color:#000;
+  border:3px solid var(--gold);padding:8px 14px;
+  font-family:'Press Start 2P',monospace;font-size:10px;
+  cursor:pointer;text-transform:uppercase;margin:4px;
+  image-rendering:pixelated;transition:background .1s;
+  letter-spacing:1px;
+}
+.btn:hover{background:var(--gold);}
+.btn-red{background:#7a1010;border-color:var(--red);color:var(--red);}
+.btn-red:hover{background:var(--red);color:#000;}
+.btn-green{background:#0d4020;border-color:var(--green);color:var(--green);}
+.btn-green:hover{background:var(--green);color:#000;}
+.btn-big{font-size:13px;padding:12px 24px;display:block;width:100%;text-align:center;margin:6px 0;}
+.btn-row{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-top:12px;}
+
+/* FORMS */
+input[type=text],input[type=number]{
+  background:#050e1c;color:var(--gold);
+  border:2px solid var(--border);padding:6px 8px;
+  font-family:'Press Start 2P',monospace;font-size:10px;
+  width:100%;margin-bottom:8px;
+}
+input[type=text]:focus,input[type=number]:focus{outline:none;border-color:var(--gold);}
+label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
+.field-row{margin-bottom:12px;}
+
+/* CHARACTER CARDS */
+.char-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:600px){.char-cards{grid-template-columns:1fr;}}
+.char-card{
+  background:#050e1c;border:2px solid var(--border);padding:12px;
+  cursor:pointer;transition:border-color .15s;
+}
+.char-card:hover,.char-card.selected{border-color:var(--gold);}
+.char-card h3{color:var(--gold);font-size:10px;margin-bottom:6px;}
+.char-card p{font-size:8px;color:var(--text);line-height:1.7;}
+.char-home{color:var(--dim);font-size:8px;margin-top:6px;}
+
+/* MARKET */
+.good-row{
+  background:#050e1c;border:1px solid var(--border);
+  padding:10px;margin-bottom:8px;
+  display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;
+}
+.good-name{color:var(--gold);font-size:10px;}
+.good-price{color:var(--text);font-size:9px;white-space:nowrap;}
+.good-qty{width:70px !important;margin:0;}
+.good-desc{font-size:8px;color:var(--dim);grid-column:1/-1;margin-top:4px;}
+
+/* INVENTORY */
+.inv-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:6px 8px;border-bottom:1px solid var(--border);font-size:9px;
+}
+.inv-row:last-child{border-bottom:none;}
+.inv-name{color:var(--gold);}
+.inv-qty{color:var(--text);}
+.inv-val{color:var(--green);}
+
+/* EVENTS */
+.event-box{
+  border:3px solid;padding:16px;margin:10px 0;text-align:center;
+}
+.event-box.red{border-color:var(--red);background:#1a0505;}
+.event-box.green{border-color:var(--green);background:#051a0a;}
+.event-box.yellow{border-color:var(--yellow);background:#1a1405;}
+.event-title{font-size:14px;margin-bottom:10px;letter-spacing:1px;}
+.event-desc{font-size:9px;line-height:1.9;}
+.event-quote{font-style:italic;font-size:8px;color:var(--dim);margin-top:10px;border-top:1px solid;padding-top:8px;}
+.roll-num{font-size:40px;display:block;margin:8px 0;color:var(--gold);}
+
+/* SELL TABLE */
+.sell-table{width:100%;border-collapse:collapse;font-size:9px;}
+.sell-table th{background:#0d1f38;color:var(--dim);padding:6px 8px;text-align:left;border:1px solid var(--border);}
+.sell-table td{padding:6px 8px;border:1px solid var(--border);}
+.sell-table tr:nth-child(even){background:#050e1c;}
+.sell-val{color:var(--green);}
+.no-sale{color:var(--dim);}
+
+/* DEATH */
+#screen-death{text-align:center;}
+.skull{font-size:64px;display:block;margin:10px 0;}
+.death-msg{color:var(--red);font-size:16px;margin:10px 0;line-height:2;}
+
+/* TITLE */
+#screen-title{text-align:center;}
+.game-title{color:var(--gold);font-size:16px;line-height:2.2;margin:10px 0;text-shadow:3px 3px #000;}
+.game-sub{color:var(--dim);font-size:9px;margin-bottom:16px;}
+.blink{animation:blink 1s step-end infinite;}
+@keyframes blink{50%{opacity:0;}}
+
+/* DATE display */
+.date-badge{color:var(--yellow);font-size:9px;}
+
+/* SELL MODIFIER BANNER */
+.mod-banner{
+  text-align:center;padding:8px;margin-bottom:10px;
+  font-size:10px;border:2px solid;
+}
+.mod-banner.double{border-color:var(--green);color:var(--green);background:#051a0a;}
+.mod-banner.normal{border-color:var(--border);color:var(--dim);}
+
+/* ROUTE LIST */
+.route-list{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0;}
+.route-btn{
+  background:#050e1c;border:2px solid var(--border);
+  padding:10px 16px;font-family:'Press Start 2P',monospace;
+  font-size:9px;color:var(--text);cursor:pointer;
+  transition:border-color .15s;
+}
+.route-btn:hover{border-color:var(--gold);color:var(--gold);}
+.route-btn.home-btn{border-color:var(--green);color:var(--green);}
+.route-btn.home-btn:hover{background:#051a0a;}
+.route-btn.banned{border-color:#330000;color:#440000;cursor:not-allowed;}
+
+/* NOTICE */
+.notice{font-size:9px;padding:8px;margin:6px 0;border-left:3px solid var(--dim);color:var(--dim);line-height:1.9;}
+
+/* SCORE TABLE */
+.score-table{width:100%;border-collapse:collapse;font-size:9px;margin-top:10px;}
+.score-table th{background:var(--dkgold);color:#000;padding:8px;border:2px solid var(--gold);}
+.score-table td{padding:8px;border:1px solid var(--border);text-align:center;}
+.score-table tr:nth-child(even){background:#050e1c;}
+
+/* CREW LIST */
+.crew-list{margin:10px 0;font-size:9px;}
+.crew-list span{color:var(--gold);}
+
+/* progress bar */
+.progress-wrap{background:#050e1c;border:1px solid var(--border);height:12px;margin:8px 0;}
+.progress-bar{height:100%;background:var(--dkgold);transition:width .3s;}
+
+/* LEADERBOARD */
+.lb-table{width:100%;border-collapse:collapse;font-size:9px;margin-top:10px;}
+.lb-table th{background:var(--dkgold);color:#000;padding:7px 8px;border:2px solid var(--gold);}
+.lb-table td{padding:7px 8px;border:1px solid var(--border);}
+.lb-table tr:nth-child(even){background:#050e1c;}
+.lb-rank{color:var(--gold);font-weight:bold;}
+.lb-empty{color:var(--dim);text-align:center;padding:20px;font-size:9px;}
+
+/* MARKET TIP */
+.market-tip{
+  background:#1a1405;border:2px solid var(--yellow);
+  color:var(--yellow);font-size:8px;padding:8px 10px;
+  margin-bottom:12px;line-height:1.9;
+}
+
+/* DEBT warning */
+.dinars-debt{color:var(--red) !important;}
+
+/* SPEAKER TOGGLE */
+#music-toggle{
+  background:none;border:2px solid var(--border);
+  color:var(--gold);font-size:16px;cursor:pointer;
+  padding:4px 8px;border-radius:2px;
+  transition:border-color .15s, color .15s;
+  line-height:1;
+}
+#music-toggle:hover{border-color:var(--gold);}
+#music-toggle.muted{color:var(--dim);border-color:#1a2a3a;}
+
+/* CREW DEATH */
+.crew-death-box{
+  border:2px solid #7a3030;background:#1a0505;
+  padding:10px;margin:8px 0;font-size:9px;
+  color:var(--red);text-align:center;
+}
+</style>
+</head>
+<body>
+
+<!-- HUD: always visible once game starts -->
+<div id="hud" style="display:none;">
+  <div class="hud-item">
+    <span class="hud-label">MERCHANT</span>
+    <span class="hud-val" id="hud-name">—</span>
+  </div>
+  <div class="hud-item">
+    <span class="hud-label">PORT</span>
+    <span class="hud-val" id="hud-port">—</span>
+  </div>
+  <div class="hud-item">
+    <span class="hud-label">DINARS</span>
+    <span class="hud-val" id="hud-dinars">1000</span>
+  </div>
+  <div class="hud-item">
+    <span class="hud-label">DATE</span>
+    <span class="hud-val date-badge" id="hud-date">April 1301</span>
+  </div>
+  <div class="hud-item">
+    <span class="hud-label">DEATHS</span>
+    <span class="hud-val" style="color:var(--red)" id="hud-deaths">0</span>
+  </div>
+  <div class="hud-item">
+    <span class="hud-label">BEST HAUL</span>
+    <span class="hud-val" style="color:var(--green)" id="hud-best">0</span>
+  </div>
+  <div class="hud-item" style="align-self:center;margin-left:auto;">
+    <button class="btn btn-red" onclick="confirmMainMenu()" style="font-size:8px;padding:6px 10px;margin:0;">⌂ MAIN MENU</button>
+    <button id="music-toggle" onclick="toggleMusic()" title="Toggle music">🔊</button>
+  </div>
+</div>
+
+<div id="game">
+
+<!-- ===== TITLE SCREEN ===== -->
+<div id="screen-title" class="screen active">
+  <div class="panel">
+    <div id="map-wrap" style="position:relative;">
+      <img src="Indian Ocean Routes.jpg" style="display:block;width:100%;height:auto;" alt="Indian Ocean Trade Routes Map">
+      <!-- SVG overlay for port markers and ship — sized to match the image -->
+      <svg id="map-overlay" viewBox="0 0 1000 715"
+        style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;">
+        <!-- Port markers -->
+        <circle cx="65"  cy="193" r="8" fill="#f0c040" stroke="#000" stroke-width="2"/>
+        <text x="78"  y="188" class="port-label">CAIRO</text>
+        <circle cx="72"  cy="503" r="8" fill="#f0c040" stroke="#000" stroke-width="2"/>
+        <text x="85"  y="498" class="port-label">KILWA</text>
+        <circle cx="272" cy="213" r="8" fill="#f0c040" stroke="#000" stroke-width="2"/>
+        <text x="285" y="208" class="port-label">HORMUZ</text>
+        <circle cx="478" cy="372" r="8" fill="#f0c040" stroke="#000" stroke-width="2"/>
+        <text x="491" y="367" class="port-label">CALICUT</text>
+        <circle cx="652" cy="388" r="8" fill="#f0c040" stroke="#000" stroke-width="2"/>
+        <text x="665" y="383" class="port-label">MALACCA</text>
+        <circle cx="808" cy="198" r="8" fill="#f0c040" stroke="#000" stroke-width="2"/>
+        <text x="821" y="193" class="port-label">GUANGZHOU</text>
+        <!-- Ship emoji -->
+        <text id="ship" x="57" y="205" style="font-size:22px;transition:all 1.8s ease-in-out;">⛵</text>
+      </svg>
+    </div>
+
+    <div style="text-align:center;padding:20px 10px;">
+      <div class="game-title">INDIAN OCEAN<br>TRADE SIMULATION</div>
+      <div class="game-sub">Economic Middle Men of the 1300s</div>
+      <p style="font-size:9px;color:var(--text);max-width:520px;margin:0 auto 16px;line-height:2;">
+        This decentralized world largely drove the international economy in the medieval period.
+        Can you make a fortune—or will the ocean swallow you whole?
+      </p>
+      <div style="color:var(--red);font-size:10px;margin-bottom:16px;">THE GAME: MAKE THE MOST MONEY.<br>ALSO, DON'T DIE.</div>
+      <button class="btn btn-big blink" onclick="startGame()">▶ PRESS START</button>
+      <button class="btn" onclick="showLeaderboard()" style="margin-top:6px;width:100%;">🏆 TODAY'S LEADERBOARD</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LEADERBOARD ===== -->
+<div id="screen-leaderboard" class="screen">
+  <div class="panel">
+    <div class="panel-title">🏆 TODAY'S LEADERBOARD</div>
+    <div class="panel-subtitle" id="lb-date-label"></div>
+    <div id="lb-content"></div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-big" onclick="goToTitle()">◀ BACK TO TITLE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CHARACTER SELECT ===== -->
+<div id="screen-char-select" class="screen">
+  <div class="panel">
+    <div class="panel-title">CHOOSE YOUR MERCHANT</div>
+    <div class="panel-subtitle">Your starting location and trade connections depend on your identity.</div>
+    <div class="char-cards" id="char-cards"></div>
+    <div class="btn-row">
+      <button class="btn btn-green" id="btn-char-confirm" onclick="confirmChar()" disabled>CONFIRM MERCHANT ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CHARACTER NAME ===== -->
+<div id="screen-char-name" class="screen">
+  <div class="panel">
+    <div class="panel-title">NAME YOUR CREW</div>
+    <div class="panel-subtitle">Every great merchant is remembered by their name.</div>
+    <div class="field-row">
+      <label>YOUR NAME:</label>
+      <input type="text" id="input-merchant-name" maxlength="22" placeholder="e.g. Ahmad ibn Fadlan">
+    </div>
+    <div style="color:var(--dim);font-size:9px;margin-bottom:10px;">YOUR FIVE CREW MEMBERS:</div>
+    <div id="crew-inputs"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="showScreen('char-select')">◀ BACK</button>
+      <button class="btn btn-green" onclick="confirmNames()">SET SAIL ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MARKET ===== -->
+<div id="screen-market" class="screen">
+  <div class="panel">
+    <div class="panel-title" id="market-title">LOCAL MARKET</div>
+    <div class="panel-subtitle" id="market-subtitle"></div>
+    <div id="repair-notice" style="display:none;" class="notice" style="border-color:var(--yellow);"></div>
+    <div class="market-tip">⚠ WISE MERCHANT'S TIP: Keep at least 200 dinars in reserve! Storms may damage your hull (200 dinar repair), and pirates can seize your entire cargo. You may borrow up to 200 dinars in an emergency — but debt is dangerous at sea.</div>
+    <p style="font-size:9px;color:var(--dim);margin-bottom:12px;">Buy up to 3 types of goods. Enter how many units you want of each.</p>
+    <div id="goods-list"></div>
+    <div style="background:#050e1c;border:1px solid var(--border);padding:10px;margin:10px 0;font-size:9px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span style="color:var(--dim);">AVAILABLE DINARS:</span>
+        <span id="market-dinars" style="color:var(--gold);"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="color:var(--dim);">CART TOTAL:</span>
+        <span id="cart-total" style="color:var(--yellow);">0 dinars</span>
+      </div>
+      <div class="progress-wrap" style="margin-top:8px;">
+        <div class="progress-bar" id="spend-bar" style="width:0%;"></div>
+      </div>
+    </div>
+    <div id="type-warning" style="display:none;color:var(--red);font-size:9px;margin:4px 0;"></div>
+    <div class="btn-row">
+      <button class="btn btn-green" onclick="buyGoods()">PURCHASE & CHOOSE DESTINATION ▶</button>
+      <button class="btn btn-red" onclick="retireHere()" style="margin-top:6px;">🏖 RETIRE WHERE YOU ARE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RETIREMENT ===== -->
+<div id="screen-retire" class="screen">
+  <div class="panel" style="text-align:center;">
+    <div class="panel-title" style="color:var(--green);">🏖 YOU HAVE RETIRED!</div>
+    <div style="font-size:28px;margin:14px 0;">☀️</div>
+    <p style="font-size:10px;color:var(--text);line-height:2.2;max-width:540px;margin:0 auto 18px;">
+      The Indian Ocean merchant lifestyle is not for everyone!<br>
+      Be glad you survived the perilous journey, and I hope you made a handsome profit!
+    </p>
+    <div id="retire-summary"></div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-big btn-green" onclick="restartLife()">▶ SAIL AGAIN</button>
+      <button class="btn btn-big" onclick="showLeaderboard()">🏆 LEADERBOARD</button>
+      <button class="btn btn-big" onclick="goToTitle()">⌂ MAIN MENU</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DESTINATION SELECT ===== -->
+<div id="screen-destination" class="screen">
+  <div class="panel">
+    <div class="panel-title">CHOOSE DESTINATION</div>
+    <div class="panel-subtitle" id="dest-subtitle"></div>
+    <div id="map-mini" style="margin-bottom:12px;"></div>
+    <div id="inv-display-dest"></div>
+    <p style="font-size:9px;color:var(--dim);margin:10px 0;">Where will you sail? Choose wisely — the seas are dangerous.</p>
+    <div class="route-list" id="route-buttons"></div>
+    <div id="banned-notice" style="display:none;" class="notice"></div>
+  </div>
+</div>
+
+<!-- ===== JOURNEY EVENT ===== -->
+<div id="screen-journey" class="screen">
+  <div class="panel">
+    <div class="panel-title">⛵ OCEAN JOURNEY</div>
+    <div id="journey-travel-text" style="text-align:center;color:var(--dim);font-size:9px;margin-bottom:14px;"></div>
+    <div style="text-align:center;margin-bottom:10px;">
+      <button class="btn btn-big" id="btn-roll-journey" onclick="rollJourney()">🎲 ROLL THE DIE</button>
+    </div>
+    <div id="journey-result" style="display:none;">
+      <div class="event-box" id="journey-event-box">
+        <span class="roll-num" id="journey-roll-num"></span>
+        <div class="event-title" id="journey-event-title"></div>
+        <div class="event-desc" id="journey-event-desc"></div>
+        <div class="event-quote" id="journey-event-quote" style="display:none;"></div>
+      </div>
+      <div id="journey-inv-after"></div>
+      <div class="btn-row">
+        <button class="btn btn-green" id="btn-after-journey" onclick="afterJourney()">ARRIVE AT PORT ▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PORT EVENT ===== -->
+<div id="screen-port-event" class="screen">
+  <div class="panel">
+    <div class="panel-title" id="port-event-title-bar">⚓ ARRIVING AT PORT</div>
+    <div style="text-align:center;margin-bottom:10px;">
+      <button class="btn btn-big" id="btn-roll-port" onclick="rollPort()">🎲 ROLL THE DIE</button>
+    </div>
+    <div id="port-result" style="display:none;">
+      <div class="event-box" id="port-event-box">
+        <span class="roll-num" id="port-roll-num"></span>
+        <div class="event-title" id="port-event-title"></div>
+        <div class="event-desc" id="port-event-desc"></div>
+      </div>
+      <div id="port-inv-after"></div>
+      <div class="btn-row">
+        <button class="btn btn-green" onclick="goToSell()">SELL YOUR GOODS ▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SELL ===== -->
+<div id="screen-sell" class="screen">
+  <div class="panel">
+    <div class="panel-title" id="sell-title">SELL YOUR GOODS</div>
+    <div id="sell-mod-banner"></div>
+    <div id="sell-content"></div>
+    <div class="btn-row">
+      <button class="btn btn-green" onclick="completeSale()">COLLECT DINARS & GO TO MARKET ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DEATH ===== -->
+<div id="screen-death" class="screen">
+  <div class="panel">
+    <span class="skull">☠</span>
+    <div class="death-msg" id="death-msg">YOU HAVE DIED.</div>
+    <p style="font-size:9px;color:var(--dim);margin:10px 0 20px;line-height:2;" id="death-detail"></p>
+    <p style="font-size:9px;color:var(--text);margin-bottom:16px;">Your family mourns. Your debts are forgotten.<br>But the ocean calls again...</p>
+    <div style="color:var(--dim);font-size:9px;margin-bottom:6px;">TOTAL DEATHS: <span style="color:var(--red);" id="death-count-display">0</span></div>
+    <button class="btn btn-big btn-red" onclick="restartLife()">▶ RETURN TO YOUR HOME PORT</button>
+    <button class="btn btn-big" onclick="showLeaderboard()" style="margin-top:6px;">🏆 TODAY'S LEADERBOARD</button>
+    <button class="btn btn-big" onclick="goToTitle()" style="margin-top:6px;">⌂ MAIN MENU</button>
+  </div>
+</div>
+
+<!-- ===== WIN / MADE IT HOME ===== -->
+<div id="screen-home" class="screen">
+  <div class="panel" style="text-align:center;">
+    <div class="panel-title" style="color:var(--green);">⚓ YOU MADE IT HOME!</div>
+    <div id="home-summary"></div>
+    <div class="btn-row">
+      <button class="btn btn-big btn-green" onclick="restartLife()">▶ SAIL AGAIN</button>
+      <button class="btn btn-big" onclick="showLeaderboard()">🏆 LEADERBOARD</button>
+      <button class="btn btn-big" onclick="goToTitle()">⌂ MAIN MENU</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- #game -->
+
+<script>
+// ============================================================
+// GAME DATA
+// ============================================================
+
+const CHARACTERS = [
+  {
+    id:'hormuz', title:'Arab Merchant', sub:'from Hormuz (Oman)',
+    home:'Hormuz', firstDests:['Kilwa','Calicut','Cairo'],
+    desc:'You have a large network of Muslim trading communities. Muslim rulers enforce similar trading rules across Dar Al-Islam.',
+    bg:'As a merchant born in the greatest trading capital of the age, gold flows through your fingers like monsoon rains.'
+  },
+  {
+    id:'calicut', title:'Indian Merchant', sub:'from Calicut',
+    home:'Calicut', firstDests:['Cairo','Kilwa','Malacca','Hormuz'],
+    desc:'You are from the crossroads of the global economy. You have access to cheap goods from the Indian interior like cotton cloth and pepper.',
+    bg:'Calicut has welcomed merchants from every civilization on Earth. You know the value of everything—and the price of trust.'
+  },
+  {
+    id:'cairo', title:'Jewish Merchant', sub:'from Cairo',
+    home:'Cairo', firstDests:['Kilwa','Calicut','Hormuz'],
+    desc:'A diaspora network gives you protection—there are too few Jewish merchants to risk being labeled a swindler.',
+    bg:'From Cairo to Calicut, your letters of credit are honored by brothers in faith. But you are always a stranger in a foreign port.'
+  },
+  {
+    id:'canton', title:'Chinese Merchant', sub:'from Guangzhou',
+    home:'Guangzhou', firstDests:['Malacca','Calicut'],
+    desc:'You carry the most desired goods in the world, and you are closer to the spice islands than any other merchant.',
+    bg:'The workshops of Guangzhou produce goods that emperors crave. You carry porcelain, silk, and tea—the envy of the world.'
+  }
+];
+
+const ROUTES = {
+  'Cairo':   ['Kilwa','Calicut','Hormuz'],
+  'Hormuz':  ['Cairo','Calicut','Kilwa'],
+  'Kilwa':   ['Cairo','Hormuz','Calicut'],
+  'Calicut': ['Cairo','Kilwa','Malacca','Hormuz','Guangzhou'],
+  'Malacca': ['Calicut','Guangzhou'],
+  'Guangzhou':  ['Malacca','Calicut']
+};
+
+const LOCAL_GOODS = {
+  'Cairo':[
+    {name:'Glassware',   price:100, unit:'crate', why:'Cairo was the largest trading partner of Venice and Constantinople, centers of glass production.', want:'Luxury item; symbol of wealth and social status.'},
+    {name:'Cotton Textiles', price:10, unit:'bolt',  why:'Egypt has a perfect climate for growing soft, breathable long-staple cotton.', want:'Used for clothing across the world.'},
+    {name:'Gold',        price:300, unit:'crate', why:'Gold from West African kingdoms flowed through Cairo\'s bazaars.', want:'Luxury and currency across the globe.'}
+  ],
+  'Calicut':[
+    {name:'Cotton Textiles', price:5,  unit:'bolt',  why:'India\'s climate and cheap labor made cotton the cheapest in the world.', want:'Cheaper and higher quality than anywhere else until the 1800s.'},
+    {name:'Pepper',      price:50,  unit:'crate', why:'Pepper grows abundantly along the Malabar Coast.', want:'Highly desired as both food and medicine for millennia.'},
+    {name:'Precious Stones', price:500, unit:'crate', why:'Natural resources of the Indian subcontinent.', want:'Luxury item for jewelry across the world.'},
+    {name:'Glassware',       price:200, unit:'crate', why:'Fine glassware arrived in Calicut via Persian Gulf trading networks from Cairo and Venice.', want:'A luxury status symbol prized by wealthy buyers across Asia and Africa.'}
+  ],
+  'Guangzhou':[
+    {name:'Silk',        price:25,  unit:'bolt',  why:'China maintained a monopoly on silk production for centuries.', want:'Highly desired luxury good; a sign of wealth and sophistication.'},
+    {name:'Porcelain',   price:50,  unit:'crate', why:'Chinese porcelain was unmatched in quality anywhere in the world.', want:'Highly desired luxury good across every market.'},
+    {name:'Tea',         price:100, unit:'crate', why:'China was the origin and center of tea culture.', want:'Desired as a luxury beverage and medicinal drink.'}
+  ],
+  'Hormuz':[
+    {name:'Perfumes',    price:50,  unit:'crate', why:'Hormuz was the export hub for luxury goods from Central Asia and Baghdad.', want:'A luxury item prized by the wealthy across the world.'},
+    {name:'Lapis Lazuli', price:500, unit:'crate', why:'From the mines of Afghanistan, exported through Hormuz.', want:'Used for jewelry and decoration; a sign of immense wealth.'}
+  ],
+  'Kilwa':[
+    {name:'Gold',        price:250, unit:'crate', why:'The Swahili coast was the gateway to gold from the kingdom of Greater Zimbabwe.', want:'Luxury good and currency; desired everywhere.'},
+    {name:'Ivory',       price:100, unit:'tusk',  why:'The African interior provided abundant ivory through Kilwa\'s markets.', want:'A luxury item for carvings and decorations.'},
+    {name:'Iron',        price:50,  unit:'bar',   why:'Iron goods from the African interior flowed through Kilwa.', want:'Used for tools and weapons wherever metal is scarce.'}
+  ],
+  'Malacca':[
+    {name:'Cloves and Cinnamon', price:50, unit:'crate', why:'From the Spice Islands—microclimates on tiny Indonesian islands. Cannot be grown anywhere else.', want:'Used as luxury food and medicine; people believed they cured many ailments.'},
+    {name:'Nutmeg',      price:50,  unit:'crate', why:'Grown only on the Spice Islands, Malacca was the nearest port.', want:'Rare, exotic, and believed to have powerful medicinal properties.'}
+  ]
+};
+
+const SELL_PRICES = {
+  'Cairo':   {'Nutmeg':{p:150,u:'crate'},'Cloves and Cinnamon':{p:150,u:'crate'},'Pepper':{p:75,u:'crate'},'Gold':{p:300,u:'crate'},'Silk':{p:75,u:'bolt'},'Cotton Textiles':{p:10,u:'bolt'},'Porcelain':{p:125,u:'crate'},'Tea':{p:150,u:'crate'},'Lapis Lazuli':{p:600,u:'crate'},'Ivory':{p:150,u:'tusk'},'Precious Stones':{p:750,u:'crate'}},
+  'Calicut': {'Gold':{p:400,u:'crate'},'Silk':{p:50,u:'bolt'},'Porcelain':{p:100,u:'crate'},'Cloves and Cinnamon':{p:100,u:'crate'},'Perfumes':{p:100,u:'crate'},'Iron':{p:100,u:'bar'},'Tea':{p:150,u:'crate'}},
+  'Guangzhou':  {'Cloves and Cinnamon':{p:75,u:'crate'},'Ivory':{p:300,u:'tusk'},'Gold':{p:400,u:'crate'},'Pepper':{p:100,u:'crate'},'Glassware':{p:200,u:'crate'},'Cotton Textiles':{p:15,u:'bolt'}},
+  'Hormuz':  {'Cloves and Cinnamon':{p:150,u:'crate'},'Nutmeg':{p:150,u:'crate'},'Cotton Textiles':{p:15,u:'bolt'},'Iron':{p:75,u:'bar'},'Porcelain':{p:125,u:'crate'},'Tea':{p:150,u:'crate'},'Gold':{p:300,u:'crate'},'Pepper':{p:75,u:'crate'},'Silk':{p:40,u:'bolt'},'Ivory':{p:200,u:'tusk'}},
+  'Kilwa':   {'Cotton Textiles':{p:15,u:'bolt'},'Pepper':{p:75,u:'crate'},'Cloves and Cinnamon':{p:150,u:'crate'},'Precious Stones':{p:750,u:'crate'},'Porcelain':{p:150,u:'crate'},'Glassware':{p:150,u:'crate'},'Silk':{p:50,u:'bolt'}},
+  'Malacca': {'Cotton Textiles':{p:10,u:'bolt'},'Gold':{p:350,u:'crate'},'Ivory':{p:200,u:'tusk'},'Porcelain':{p:100,u:'crate'},'Silk':{p:40,u:'bolt'},'Precious Stones':{p:650,u:'crate'},'Tea':{p:125,u:'crate'},'Iron':{p:75,u:'bar'}}
+};
+
+// OCEAN JOURNEY EVENTS (Ten-sided die — roll 1–10)
+// Bad outcomes (die or lose goods): rolls 1–4 = 4/10 = 40% (was 4/6 = 67% on d6)
+const JOURNEY_EVENTS = [
+  {roll:1,  color:'red',    title:'☠ PIRATES!',
+   desc:'Pirates board your vessel. You put up no resistance so they let you live — but they take EVERYTHING. All your goods are gone.',
+   quote:'', effect:'lose_all'},
+  {roll:2,  color:'yellow', title:'⚓ CYCLONE DAMAGE!',
+   desc:'Your ship is badly damaged in a cyclone. A quarter of your cargo is destroyed or lost to the sea.',
+   quote:'"No one had ever accomplished this journey without an accident. To reach China and not perish—that in itself was regarded as a considerable feat." — Book of the Marvels of India, 900s',
+   effect:'lose_quarter_goods'},
+  {roll:3,  color:'yellow', title:'💨 BLOWN OFF COURSE',
+   desc:'Unfavorable winds push you far from your route. You lose a quarter of your goods. But at least you\'re not dead.',
+   quote:'', effect:'lose_quarter_goods'},
+  {roll:4,  color:'red',    title:'☠ SHIPWRECK!',
+   desc:'Your ship breaks apart on hidden rocks in the dark of night. You cling to a piece of timber, but your crew and all your goods are lost.',
+   quote:'"The constant companion of the medieval traveler on the open oceans was terror." — William J. Bernstein, The Splendid Exchange',
+   effect:'die'},
+  {roll:5,  color:'red',    title:'💀 CREW MEMBER LOST',
+   desc:'A sudden wave sweeps one of your crew overboard. You search for hours but find nothing. The sea has claimed them. Your cargo arrives safely.',
+   quote:'', effect:'crew_death'},
+  {roll:6,  color:'green',  title:'⛵ SAFE PASSAGE',
+   desc:'You followed the seasonal monsoon winds and arrived without incident.',
+   quote:'', effect:'none'},
+  {roll:7,  color:'green',  title:'⛵ SAFE PASSAGE',
+   desc:'Clear skies and steady winds. A textbook crossing of the Indian Ocean.',
+   quote:'', effect:'none'},
+  {roll:8,  color:'green',  title:'⛵ SAFE PASSAGE',
+   desc:'You join a small convoy of fellow merchants. Safety in numbers — smooth sailing all the way.',
+   quote:'', effect:'none'},
+  {roll:9,  color:'green',  title:'💨 FAVORABLE WINDS!',
+   desc:'The monsoon winds are with you! You arrive ahead of schedule. Grateful passengers reward your crew with 200 bonus dinars.',
+   quote:'', effect:'bonus_dinars'},
+  {roll:10, color:'red',    title:'🤒 DISEASE!',
+   desc:'A mysterious illness sweeps through the lower deck. One of your crew members does not survive the crossing. Your cargo arrives safely.',
+   quote:'', effect:'crew_death'}
+];
+
+// PORT ARRIVAL EVENTS (Ten-sided die — roll 1–10)
+// Bad outcomes (lose goods or money): rolls 1–3 = 3/10 = 30% (was 3/6 = 50% on d6)
+const PORT_EVENTS = [
+  {roll:1,  color:'red',    title:'🤝 CHEATED!',
+   desc:'Your trading partner has deceived you! The weights were falsified. You lose half your goods. This port is now closed to you.',
+   effect:'lose_half_ban'},
+  {roll:2,  color:'red',    title:'👑 ROYAL BRIBE',
+   desc:'The local ruler demands an expensive gift before you may trade. You lose a quarter of your goods AND a quarter of your dinars.',
+   effect:'lose_quarter_both'},
+  {roll:3,  color:'yellow', title:'⚓ HARBOR FEES',
+   desc:'The harbor master charges steep docking fees. Spend 200 dinars to berth your ship before purchasing new goods.',
+   effect:'repair_200'},
+  {roll:4,  color:'green',  title:'🌟 SMOOTH LANDING',
+   desc:'The port welcomes you. Trade at normal market prices.',
+   effect:'none'},
+  {roll:5,  color:'green',  title:'🌟 SMOOTH LANDING',
+   desc:'The harbormaster waves you through without delay. Trade at normal market prices.',
+   effect:'none'},
+  {roll:6,  color:'green',  title:'🌟 SMOOTH LANDING',
+   desc:'The market is open and the locals are friendly. Trade at normal market prices.',
+   effect:'none'},
+  {roll:7,  color:'green',  title:'🌟 PROSPEROUS PORT',
+   desc:'The market is bustling and merchants are eager to deal. Sell at normal market prices.',
+   effect:'none'},
+  {roll:8,  color:'green',  title:'📦 SHORTAGE!',
+   desc:'There is a shortage of the goods you brought! Local merchants are desperate. Sell everything for DOUBLE the normal price!',
+   effect:'double_sell'},
+  {roll:9,  color:'green',  title:'🛒 EAGER BUYERS!',
+   desc:'Word of your cargo reached the market before you did. Merchants are competing for your goods — sell everything for 1.5× the normal price!',
+   effect:'sell_150'},
+  {roll:10, color:'green',  title:'🎉 MARKET FESTIVAL!',
+   desc:'You arrive during a great trading festival! The whole city is buying. Sell everything for DOUBLE the normal price — and your crew gets a free feast!',
+   effect:'double_sell'}
+];
+
+// Port coordinates matching SVG overlay viewBox 0 0 1000 715
+const PORT_COORDS = {
+  'Cairo':   [65,  193],
+  'Kilwa':   [72,  503],
+  'Hormuz':  [272, 213],
+  'Calicut': [478, 372],
+  'Malacca': [652, 388],
+  'Guangzhou':  [808, 198]
+};
+
+// ============================================================
+// GAME STATE
+// ============================================================
+const DEBT_LIMIT = 200; // player may borrow up to this amount
+
+let G = {
+  char: null,
+  merchantName: '',
+  crewNames: [],
+  crewAlive: [],    // tracks surviving crew this life
+  homePort: '',
+  currentPort: '',
+  destinationPort: '',
+  dinars: 1000,
+  inventory: [], // [{name, qty, unit, buyPrice}]
+  deaths: 0,
+  bestDinars: 0,
+  date: {year:1301, monthIndex:0}, // monthIndex 0=April
+  bannedPorts: [],
+  sellMultiplier: 1,
+  pendingRepair: false,
+  repairPaid: false,
+  legs: 0, // journey legs taken this life
+  firstLeg: true
+};
+
+const MONTHS = ['April','October'];
+function dateStr(){return MONTHS[G.date.monthIndex % 2] + ' ' + (G.date.year);}
+function advanceDate(){
+  G.date.monthIndex++;
+  if(G.date.monthIndex % 2 === 0) G.date.year++;
+}
+
+// ============================================================
+// SCREEN MANAGEMENT
+// ============================================================
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el = document.getElementById('screen-'+name);
+  if(el) el.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function updateHUD(){
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('hud-name').textContent = G.merchantName || '—';
+  document.getElementById('hud-port').textContent = G.currentPort || '—';
+  const dEl = document.getElementById('hud-dinars');
+  dEl.textContent = G.dinars.toLocaleString() + ' ⚖';
+  dEl.className = 'hud-val' + (G.dinars < 0 ? ' dinars-debt' : '');
+  document.getElementById('hud-date').textContent = dateStr();
+  document.getElementById('hud-deaths').textContent = G.deaths;
+  document.getElementById('hud-best').textContent = G.bestDinars.toLocaleString();
+  moveShip(G.currentPort);
+}
+
+let _musicMuted = false;
+
+function startGame(){
+  // Start looping background music on first player interaction
+  const music = document.getElementById('snd-music');
+  music.volume = 0.6;
+  music.play().catch(()=>{});
+  showScreen('char-select');
+}
+
+function toggleMusic(){
+  const music = document.getElementById('snd-music');
+  const btn = document.getElementById('music-toggle');
+  _musicMuted = !_musicMuted;
+  music.muted = _musicMuted;
+  btn.textContent = _musicMuted ? '🔇' : '🔊';
+  btn.classList.toggle('muted', _musicMuted);
+}
+
+function goToTitle(){
+  document.getElementById('hud').style.display = 'none';
+  selectedCharIdx = null;
+  buildCharCards(); // clears any highlighted selection
+  const nameEl = document.getElementById('input-merchant-name');
+  if(nameEl) nameEl.value = '';
+  document.getElementById('btn-char-confirm').disabled = true;
+  showScreen('title');
+}
+
+function confirmMainMenu(){
+  if(confirm('Return to main menu? Your current progress will be lost.')){
+    goToTitle();
+  }
+}
+
+function moveShip(port){
+  if(!port || !PORT_COORDS[port]) return;
+  const ship = document.getElementById('ship');
+  const [x,y] = PORT_COORDS[port];
+  ship.setAttribute('x', x - 8);
+  ship.setAttribute('y', y - 20);
+}
+
+function animateShip(from, to, cb){
+  const ship = document.getElementById('ship');
+  const [fx,fy] = PORT_COORDS[from] || [80,65];
+  const [tx,ty] = PORT_COORDS[to]   || [80,65];
+  ship.setAttribute('x', fx - 8);
+  ship.setAttribute('y', fy - 20);
+  setTimeout(()=>{
+    ship.setAttribute('x', tx - 8);
+    ship.setAttribute('y', ty - 20);
+    if(cb) setTimeout(cb, 1900);
+  }, 300);
+}
+
+// ============================================================
+// TITLE → CHAR SELECT
+// ============================================================
+function buildCharCards(){
+  const container = document.getElementById('char-cards');
+  container.innerHTML = CHARACTERS.map((c,i)=>`
+    <div class="char-card" id="ccard-${i}" onclick="selectChar(${i})">
+      <h3>${c.title}</h3>
+      <div style="color:var(--dim);font-size:8px;margin-bottom:6px;">${c.sub}</div>
+      <p>${c.desc}</p>
+      <div class="char-home">🏠 Home: ${c.home}</div>
+      <div class="char-home">⛵ First voyages: ${c.firstDests.join(', ')}</div>
+    </div>
+  `).join('');
+}
+
+let selectedCharIdx = null;
+function selectChar(i){
+  selectedCharIdx = i;
+  document.querySelectorAll('.char-card').forEach((el,j)=>{
+    el.classList.toggle('selected', j===i);
+  });
+  document.getElementById('btn-char-confirm').disabled = false;
+}
+
+function confirmChar(){
+  if(selectedCharIdx === null) return;
+  G.char = CHARACTERS[selectedCharIdx];
+  G.homePort = G.char.home;
+  showScreen('char-name');
+  buildCrewInputs();
+}
+
+function buildCrewInputs(){
+  const el = document.getElementById('crew-inputs');
+  el.innerHTML = [1,2,3,4,5].map(n=>`
+    <div class="field-row">
+      <label>CREW MEMBER ${n}:</label>
+      <input type="text" id="crew-${n}" maxlength="22" placeholder="e.g. Fatima al-Rashid">
+    </div>
+  `).join('');
+}
+
+function confirmNames(){
+  const name = document.getElementById('input-merchant-name').value.trim();
+  if(!name){ alert('Please enter a name for your merchant!'); return; }
+  G.merchantName = name;
+  G.crewNames = [1,2,3,4,5].map(n=>{
+    const v = document.getElementById('crew-'+n).value.trim();
+    return v || 'Crew Member '+n;
+  });
+  G.crewAlive = [...G.crewNames];
+  G.dinars = 1000;
+  G.currentPort = G.homePort;
+  G.inventory = [];
+  G.bannedPorts = [];
+  G.sellMultiplier = 1;
+  G.pendingRepair = false;
+  G.legs = 0;
+  G.firstLeg = true;
+  updateHUD();
+  openMarket();
+}
+
+// ============================================================
+// MARKET
+// ============================================================
+function openMarket(skipRepairCheck){
+  updateHUD();
+  const port = G.currentPort;
+  const goods = LOCAL_GOODS[port];
+  document.getElementById('market-title').textContent = '🛒 MARKET: ' + port.toUpperCase();
+  document.getElementById('market-subtitle').textContent =
+    G.char.title + ' | ' + G.dinars.toLocaleString() + ' dinars available';
+
+  // Repair notice
+  const repairDiv = document.getElementById('repair-notice');
+  if(G.pendingRepair && !G.repairPaid){
+    repairDiv.style.display = 'block';
+    repairDiv.innerHTML = '⚓ SHIP REPAIR: You must pay <strong style="color:var(--yellow)">200 dinars</strong> for hull repairs before purchasing. This will be deducted automatically.';
+  } else {
+    repairDiv.style.display = 'none';
+  }
+
+  document.getElementById('market-dinars').textContent = G.dinars.toLocaleString() + ' dinars';
+  document.getElementById('cart-total').textContent = '0 dinars';
+  document.getElementById('spend-bar').style.width = '0%';
+  updateCart._prevTotal = 0; // reset so coin sound fires correctly on first add
+
+  const list = document.getElementById('goods-list');
+  list.innerHTML = goods.map((g,i)=>`
+    <div class="good-row">
+      <div>
+        <div class="good-name">${g.name}</div>
+        <div class="good-price">${g.price} dinars per ${g.unit}</div>
+      </div>
+      <div>
+        <input type="number" class="good-qty" id="qty-${i}" min="0" value="0"
+          onchange="updateCart()" oninput="updateCart()">
+        <div style="font-size:8px;color:var(--dim);text-align:center;">${g.unit}s</div>
+      </div>
+      <div style="font-size:8px;color:var(--dim);max-width:160px;">
+        <div style="color:var(--dim);margin-bottom:3px;">${g.why}</div>
+      </div>
+      <div class="good-desc">${g.want}</div>
+    </div>
+  `).join('');
+  showScreen('market');
+}
+
+function updateCart(){
+  const port = G.currentPort;
+  const goods = LOCAL_GOODS[port];
+  let total = 0, types = 0;
+  goods.forEach((g,i)=>{
+    const qty = parseInt(document.getElementById('qty-'+i).value)||0;
+    if(qty>0) types++;
+    total += qty * g.price;
+  });
+  // Play coin sound when cart total increases (user added goods)
+  if(total > (updateCart._prevTotal || 0)){
+    const coin = document.getElementById('snd-coin');
+    coin.currentTime = 0;
+    coin.play().catch(()=>{});
+  }
+  updateCart._prevTotal = total;
+  document.getElementById('cart-total').textContent = total.toLocaleString() + ' dinars';
+  const maxSpend = G.dinars + DEBT_LIMIT;
+  const pct = Math.min(100, Math.round(total / Math.max(maxSpend,1) * 100));
+  document.getElementById('spend-bar').style.width = pct + '%';
+  document.getElementById('market-dinars').textContent =
+    G.dinars.toLocaleString() + ' dinars' + (G.dinars < 0 ? ' (IN DEBT)' : '') +
+    ' (may borrow up to ' + DEBT_LIMIT + ')';
+
+  const warn = document.getElementById('type-warning');
+  if(types > 3){
+    warn.style.display = 'block';
+    warn.textContent = '⚠ Max 3 types of goods!';
+  } else if(total > maxSpend){
+    warn.style.display = 'block';
+    warn.textContent = '⚠ Exceeds credit limit! Max you can spend: ' + maxSpend.toLocaleString() + ' dinars';
+  } else {
+    warn.style.display = 'none';
+  }
+}
+
+function retireHere(){
+  if(G.dinars > G.bestDinars) G.bestDinars = G.dinars;
+  addToLeaderboard();
+  updateHUD();
+  const profit = G.dinars - 1000;
+  document.getElementById('retire-summary').innerHTML = `
+    <div style="background:#050e1c;border:1px solid var(--border);padding:12px;margin:10px auto;max-width:400px;font-size:9px;line-height:2.2;">
+      <div style="margin-bottom:4px;">MERCHANT: <span style="color:var(--gold)">${G.merchantName}</span></div>
+      <div style="margin-bottom:4px;">RETIRED IN: <span style="color:var(--gold)">${G.currentPort}</span></div>
+      <div style="margin-bottom:4px;">DATE: <span style="color:var(--text)">${dateStr()}</span></div>
+      <div style="margin-bottom:4px;">FINAL DINARS: <span style="color:var(--green)">${G.dinars.toLocaleString()}</span></div>
+      <div style="margin-bottom:4px;">NET PROFIT: <span style="color:${profit>=0?'var(--green)':'var(--red)'}">${profit.toLocaleString()}</span></div>
+      <div>TOTAL DEATHS: <span style="color:var(--red)">${G.deaths}</span></div>
+    </div>`;
+  showScreen('retire');
+}
+
+function buyGoods(){
+  const port = G.currentPort;
+  const goods = LOCAL_GOODS[port];
+  let cart = [], total = 0, types = 0;
+  goods.forEach((g,i)=>{
+    const qty = parseInt(document.getElementById('qty-'+i).value)||0;
+    if(qty>0){
+      types++;
+      total += qty * g.price;
+      cart.push({name:g.name, qty:qty, unit:g.unit, buyPrice:g.price});
+    }
+  });
+  if(types > 3){ alert('You can only buy up to 3 types of goods!'); return; }
+  if(total > G.dinars + DEBT_LIMIT){ alert('Exceeds your credit limit! Max: ' + (G.dinars + DEBT_LIMIT).toLocaleString() + ' dinars.'); return; }
+  if(total === 0){ alert('Buy at least something before setting sail!'); return; }
+
+  // Deduct repair if needed (allowed to go into debt up to DEBT_LIMIT)
+  if(G.pendingRepair && !G.repairPaid){
+    if((G.dinars - total - 200) < -DEBT_LIMIT){
+      alert('You cannot afford ship repairs plus this purchase. Reduce your cart or you will exceed your credit limit.');
+      return;
+    }
+    G.dinars -= 200;
+    G.repairPaid = true;
+    G.pendingRepair = false;
+  }
+
+  G.dinars -= total;
+  G.inventory = cart;
+  updateHUD();
+  openDestination();
+}
+
+// ============================================================
+// DESTINATION
+// ============================================================
+function openDestination(){
+  updateHUD();
+  const port = G.currentPort;
+  let routes = G.firstLeg ? G.char.firstDests : ROUTES[port];
+  // Filter banned
+  const available = routes.filter(r => !G.bannedPorts.includes(r));
+  const banned = routes.filter(r => G.bannedPorts.includes(r));
+
+  document.getElementById('dest-subtitle').textContent =
+    'You are in ' + port + '. Where will you sail?';
+
+  // Inventory summary
+  const invEl = document.getElementById('inv-display-dest');
+  invEl.innerHTML = '<div style="font-size:9px;color:var(--dim);margin-bottom:8px;">YOUR CARGO:</div>' +
+    G.inventory.map(it=>`<div class="inv-row"><span class="inv-name">${it.name}</span><span class="inv-qty">${it.qty} ${it.unit}s</span><span class="inv-val">${(it.qty*it.buyPrice).toLocaleString()} dn</span></div>`).join('');
+
+  const routeEl = document.getElementById('route-buttons');
+  routeEl.innerHTML = available.map(dest=>{
+    const isHome = dest === G.homePort;
+    return `<button class="route-btn ${isHome?'home-btn':''}" onclick="chooseDestination('${dest}')">
+      ${isHome?'🏠 ':''} ${dest} ${isHome?'(HOME)':''}
+    </button>`;
+  }).join('');
+
+  const bannedEl = document.getElementById('banned-notice');
+  if(banned.length > 0){
+    bannedEl.style.display = 'block';
+    bannedEl.innerHTML = '⚠ BANNED PORTS (you were cheated there): ' + banned.join(', ');
+  } else {
+    bannedEl.style.display = 'none';
+  }
+
+  showScreen('destination');
+}
+
+function chooseDestination(dest){
+  G.destinationPort = dest;
+  G.firstLeg = false;
+  openJourney();
+}
+
+// ============================================================
+// JOURNEY EVENT
+// ============================================================
+function openJourney(){
+  document.getElementById('journey-travel-text').textContent =
+    'Sailing from ' + G.currentPort + ' to ' + G.destinationPort + '...';
+  document.getElementById('btn-roll-journey').disabled = false;
+  document.getElementById('journey-result').style.display = 'none';
+  showScreen('journey');
+}
+
+function rollJourney(){
+  document.getElementById('btn-roll-journey').disabled = true;
+  const dice = document.getElementById('snd-dice');
+  dice.currentTime = 0; dice.play().catch(()=>{});
+  const snd = document.getElementById('snd-ocean');
+  snd.currentTime = 0;
+  snd.play().catch(()=>{}); // catch in case browser blocks autoplay
+  const roll = Math.floor(Math.random()*10)+1;
+  const ev = JOURNEY_EVENTS[roll-1];
+  applyJourneyEffect(ev);
+  const resultDiv = document.getElementById('journey-result');
+  const box = document.getElementById('journey-event-box');
+  box.className = 'event-box ' + ev.color;
+  document.getElementById('journey-roll-num').textContent = '🎲 ' + roll;
+  document.getElementById('journey-event-title').textContent = ev.title;
+  document.getElementById('journey-event-desc').textContent = ev.desc;
+  const quoteEl = document.getElementById('journey-event-quote');
+  if(ev.quote){
+    quoteEl.style.display = 'block';
+    quoteEl.textContent = ev.quote;
+  } else {
+    quoteEl.style.display = 'none';
+  }
+
+  // Show inventory after effect
+  const invEl = document.getElementById('journey-inv-after');
+  if(ev.effect === 'die'){
+    invEl.innerHTML = '';
+    document.getElementById('btn-after-journey').style.display = 'none';
+    setTimeout(()=>triggerDeath(ev.desc), 2200);
+  } else {
+    document.getElementById('btn-after-journey').style.display = 'inline-block';
+    let extra = '';
+    if(ev.effect === 'crew_death' && G._lastDeadCrew){
+      extra = `<div class="crew-death-box">⚰ <strong>${G._lastDeadCrew}</strong> was lost at sea.<br>
+        <span style="color:var(--dim);font-size:8px;">Remaining crew: ${G.crewAlive.length > 0 ? G.crewAlive.join(', ') : 'None'}</span></div>`;
+      G._lastDeadCrew = null;
+    }
+    invEl.innerHTML = extra + renderInventorySummary();
+  }
+
+  resultDiv.style.display = 'block';
+  // Animate ship
+  animateShip(G.currentPort, G.destinationPort);
+}
+
+function applyJourneyEffect(ev){
+  if(ev.effect === 'lose_half'){
+    G.inventory.forEach(it=>{ it.qty = Math.floor(it.qty/2); });
+    G.inventory = G.inventory.filter(it=>it.qty>0);
+  } else if(ev.effect === 'lose_all'){
+    G.inventory = [];
+  } else if(ev.effect === 'lose_quarter_goods'){
+    G.inventory.forEach(it=>{ it.qty = Math.ceil(it.qty*3/4); });
+  } else if(ev.effect === 'crew_death'){
+    if(G.crewAlive.length > 0){
+      const idx = Math.floor(Math.random() * G.crewAlive.length);
+      G._lastDeadCrew = G.crewAlive[idx];
+      G.crewAlive.splice(idx, 1);
+    }
+  } else if(ev.effect === 'bonus_dinars'){
+    G.dinars += 200;
+    updateHUD();
+  } else if(ev.effect === 'double_sell'){
+    G.sellMultiplier = 2; // set before arriving at port
+  }
+  // 'die' handled separately; 'none' does nothing
+}
+
+function afterJourney(){
+  G.currentPort = G.destinationPort;
+  G.legs++;
+  advanceDate();
+  updateHUD();
+  // If going home, skip port event
+  if(G.currentPort === G.homePort){
+    goToSellHome();
+  } else {
+    openPortEvent();
+  }
+}
+
+// ============================================================
+// PORT EVENT
+// ============================================================
+function openPortEvent(){
+  document.getElementById('port-event-title-bar').textContent = '⚓ ARRIVING AT ' + G.currentPort.toUpperCase();
+  document.getElementById('btn-roll-port').disabled = false;
+  document.getElementById('port-result').style.display = 'none';
+  G.sellMultiplier = 1;
+  G.pendingRepair = false;
+  G.repairPaid = false;
+  showScreen('port-event');
+}
+
+function rollPort(){
+  document.getElementById('btn-roll-port').disabled = true;
+  const dice = document.getElementById('snd-dice');
+  dice.currentTime = 0; dice.play().catch(()=>{});
+  const roll = Math.floor(Math.random()*10)+1;
+  const ev = PORT_EVENTS[roll-1];
+  applyPortEffect(ev);
+
+  const box = document.getElementById('port-event-box');
+  box.className = 'event-box ' + ev.color;
+  document.getElementById('port-roll-num').textContent = '🎲 ' + roll;
+  document.getElementById('port-event-title').textContent = ev.title;
+  document.getElementById('port-event-desc').textContent = ev.desc;
+
+  const invEl = document.getElementById('port-inv-after');
+  invEl.innerHTML = renderInventorySummary();
+
+  document.getElementById('port-result').style.display = 'block';
+}
+
+function applyPortEffect(ev){
+  if(ev.effect === 'lose_half_ban'){
+    G.inventory.forEach(it=>{ it.qty = Math.floor(it.qty/2); });
+    G.inventory = G.inventory.filter(it=>it.qty>0);
+    if(!G.bannedPorts.includes(G.currentPort)) G.bannedPorts.push(G.currentPort);
+  } else if(ev.effect === 'lose_quarter_both'){
+    G.inventory.forEach(it=>{ it.qty = Math.ceil(it.qty*3/4); });
+    G.dinars = Math.floor(G.dinars*3/4);
+    updateHUD();
+  } else if(ev.effect === 'double_sell'){
+    G.sellMultiplier = 2;
+  } else if(ev.effect === 'sell_150'){
+    G.sellMultiplier = 1.5;
+  } else if(ev.effect === 'repair_200'){
+    G.pendingRepair = true;
+    G.repairPaid = false;
+  }
+}
+
+// ============================================================
+// SELL SCREEN
+// ============================================================
+function goToSell(){
+  buildSellScreen(false);
+  showScreen('sell');
+}
+
+function goToSellHome(){
+  buildSellScreen(true);
+  showScreen('sell');
+}
+
+function buildSellScreen(isHome){
+  const port = G.currentPort;
+  document.getElementById('sell-title').textContent = (isHome?'🏠 ':'' )+'SELL YOUR GOODS: '+port.toUpperCase();
+
+  // Modifier banner
+  const banner = document.getElementById('sell-mod-banner');
+  if(G.sellMultiplier === 2){
+    banner.innerHTML = '<div class="mod-banner double">⚡ DOUBLE PRICE! Your goods are selling for DOUBLE the normal price!</div>';
+  } else if(G.sellMultiplier === 1.5){
+    banner.innerHTML = '<div class="mod-banner double" style="border-color:#b8860b;color:#f0c040;background:#1a1400;">🌟 EAGER BUYERS! Your goods are selling for 1.5× the normal price!</div>';
+  } else {
+    banner.innerHTML = '';
+  }
+
+  const prices = SELL_PRICES[port] || {};
+  let rows = '', totalSale = 0;
+  let soldItems = [], keptItems = [];
+  if(G.inventory.length === 0){
+    rows = '<tr><td colspan="4" style="text-align:center;color:var(--dim);">No goods to sell.</td></tr>';
+  } else {
+    G.inventory.forEach(it=>{
+      const entry = prices[it.name];
+      if(entry){
+        const unitPrice = entry.p * G.sellMultiplier;
+        const total = it.qty * unitPrice;
+        totalSale += total;
+        soldItems.push(it);
+        rows += `<tr>
+          <td class="inv-name">${it.name}</td>
+          <td>${it.qty} ${it.unit}s</td>
+          <td>${unitPrice.toLocaleString()} dn/${it.unit}${G.sellMultiplier===2?' ×2':G.sellMultiplier===1.5?' ×1.5':''}</td>
+          <td class="sell-val">${total.toLocaleString()} dn</td>
+        </tr>`;
+      } else {
+        keptItems.push(it);
+        rows += `<tr>
+          <td class="inv-name">${it.name}</td>
+          <td>${it.qty} ${it.unit}s</td>
+          <td class="no-sale">Not wanted here — stays in cargo</td>
+          <td class="no-sale">— dn</td>
+        </tr>`;
+      }
+    });
+  }
+
+  const newTotal = G.dinars + totalSale;
+  document.getElementById('sell-content').innerHTML = `
+    <table class="sell-table">
+      <tr><th>GOOD</th><th>QTY</th><th>PRICE</th><th>EARNINGS</th></tr>
+      ${rows}
+    </table>
+    <div style="background:#050e1c;border:1px solid var(--border);padding:12px;margin-top:10px;font-size:9px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="color:var(--dim)">GOODS SOLD FOR:</span>
+        <span style="color:var(--green)">${totalSale.toLocaleString()} dinars</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="color:var(--dim)">DINARS IN HAND:</span>
+        <span style="color:var(--gold)">${G.dinars.toLocaleString()} dinars</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:8px;font-size:11px;">
+        <span style="color:var(--gold)">NEW TOTAL:</span>
+        <span style="color:var(--gold);font-size:13px;">${newTotal.toLocaleString()} DINARS</span>
+      </div>
+      ${isHome?`<div style="color:var(--green);margin-top:8px;text-align:center;font-size:10px;">🏠 YOU MADE IT HOME!</div>`:''}
+    </div>
+    ${isHome ? '' : `<div style="font-size:8px;color:var(--dim);margin-top:8px;">After selling, you may buy new goods and continue your journey.</div>`}
+  `;
+
+  // Store pending sale total so completeSale can use it
+  G._pendingSaleTotal = totalSale;
+  G._keptItems = keptItems;
+  G._isAtHome = isHome;
+}
+
+function completeSale(){
+  G.dinars += G._pendingSaleTotal;
+  G.inventory = G._keptItems || [];
+  G.sellMultiplier = 1;
+  G._pendingSaleTotal = 0;
+  G._keptItems = [];
+  updateHUD();
+
+  if(G._isAtHome){
+    // Victory! You made it home.
+    if(G.dinars > G.bestDinars) G.bestDinars = G.dinars;
+    addToLeaderboard();
+    updateHUD();
+    buildHomeScreen();
+    showScreen('home');
+  } else {
+    // Check debt death
+    if(G.dinars < -DEBT_LIMIT){
+      triggerDeath('You have fallen into unrecoverable debt. No merchant will extend you credit. Your trading days are over.');
+      return;
+    }
+    openMarket();
+  }
+}
+
+function buildHomeScreen(){
+  const profit = G.dinars - 1000;
+  document.getElementById('home-summary').innerHTML = `
+    <div style="font-size:9px;line-height:2.2;margin:16px 0;">
+      <div style="color:var(--dim);margin-bottom:4px;">MERCHANT</div>
+      <div style="color:var(--gold);font-size:12px;margin-bottom:12px;">${G.merchantName}</div>
+      <div style="margin-bottom:6px;">TOTAL DINARS: <span style="color:var(--green)">${G.dinars.toLocaleString()}</span></div>
+      <div style="margin-bottom:6px;">STARTED WITH: <span style="color:var(--text)">1,000</span></div>
+      <div style="margin-bottom:6px;">NET PROFIT: <span style="color:${profit>=0?'var(--green)':'var(--red)'}">${profit.toLocaleString()}</span></div>
+      <div style="margin-bottom:6px;">DEATHS THIS RUN: <span style="color:var(--red)">${G.deaths}</span></div>
+      <div style="margin-bottom:6px;">DATE RETURNED: <span style="color:var(--text)">${dateStr()}</span></div>
+    </div>
+    <div style="font-size:9px;color:var(--dim);">CREW WHO SURVIVED:</div>
+    <div style="font-size:9px;color:var(--gold);margin-top:4px;">${G.crewNames.join(' · ')}</div>
+  `;
+}
+
+// ============================================================
+// DEATH
+// ============================================================
+function triggerDeath(reason){
+  G.deaths++;
+  updateHUD();
+  document.getElementById('death-msg').textContent = '☠ YOU HAVE DIED';
+  document.getElementById('death-detail').innerHTML =
+    reason + '<br><br>Crew names will be remembered:<br>' +
+    '<span style="color:var(--gold)">'+G.crewNames.join(' · ')+'</span>';
+  document.getElementById('death-count-display').textContent = G.deaths;
+  showScreen('death');
+}
+
+function restartLife(){
+  G.dinars = 1000;
+  G.inventory = [];
+  G.bannedPorts = [];
+  G.sellMultiplier = 1;
+  G.pendingRepair = false;
+  G.repairPaid = false;
+  G.legs = 0;
+  G.firstLeg = true;
+  G.currentPort = G.homePort;
+  G.date = {year:1301, monthIndex:0};
+  G.crewAlive = [...G.crewNames]; // revive crew on restart
+  updateHUD();
+  openMarket();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function renderInventorySummary(){
+  if(!G.inventory || G.inventory.length === 0){
+    return '<div style="color:var(--red);font-size:9px;margin-top:8px;">⚠ Your cargo hold is empty.</div>';
+  }
+  return '<div style="margin-top:10px;">'+
+    '<div style="font-size:8px;color:var(--dim);margin-bottom:4px;">REMAINING CARGO:</div>'+
+    G.inventory.map(it=>`<div class="inv-row"><span class="inv-name">${it.name}</span><span class="inv-qty">${it.qty} ${it.unit}s</span></div>`).join('')+
+  '</div>';
+}
+
+// ============================================================
+// LEADERBOARD (localStorage, daily reset)
+// ============================================================
+const LB_KEY = 'iot_leaderboard_v1';
+
+function todayStr(){
+  return new Date().toISOString().slice(0,10); // "2026-03-25"
+}
+
+function loadLeaderboard(){
+  try {
+    const raw = localStorage.getItem(LB_KEY);
+    if(!raw) return [];
+    const all = JSON.parse(raw);
+    const today = todayStr();
+    // Keep only today's entries
+    return all.filter(e => e.realDate === today);
+  } catch(e){ return []; }
+}
+
+function saveLeaderboard(entries){
+  try {
+    localStorage.setItem(LB_KEY, JSON.stringify(entries));
+  } catch(e){}
+}
+
+function addToLeaderboard(){
+  const entries = loadLeaderboard();
+  entries.push({
+    name: G.merchantName,
+    char: G.char ? G.char.title + ' (' + G.char.sub + ')' : '—',
+    dinars: G.dinars,
+    deaths: G.deaths,
+    gameDate: dateStr(),
+    realDate: todayStr()
+  });
+  // Sort by dinars desc
+  entries.sort((a,b) => b.dinars - a.dinars);
+  saveLeaderboard(entries);
+}
+
+function showLeaderboard(){
+  const entries = loadLeaderboard();
+  const dateLabel = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('lb-date-label').textContent = 'Scores for ' + dateLabel + ' · Resets at midnight';
+
+  let content = '';
+  if(entries.length === 0){
+    content = '<div class="lb-empty">No merchants have made it home today.<br>Be the first!</div>';
+  } else {
+    const medals = ['🥇','🥈','🥉'];
+    const rows = entries.slice(0,10).map((e,i)=>`
+      <tr>
+        <td class="lb-rank">${medals[i] || (i+1)+'.'}</td>
+        <td style="color:var(--gold)">${e.name}</td>
+        <td style="font-size:8px;color:var(--dim)">${e.char}</td>
+        <td style="color:var(--green)">${e.dinars.toLocaleString()} dn</td>
+        <td style="color:var(--red)">${e.deaths}☠</td>
+        <td style="color:var(--dim);font-size:8px;">${e.gameDate}</td>
+      </tr>`).join('');
+    content = `<table class="lb-table">
+      <tr>
+        <th>#</th><th>MERCHANT</th><th>CHARACTER</th>
+        <th>DINARS</th><th>DEATHS</th><th>DATE HOME</th>
+      </tr>
+      ${rows}
+    </table>`;
+  }
+  document.getElementById('lb-content').innerHTML = content;
+  showScreen('leaderboard');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+buildCharCards();
+// Show ship at Cairo by default on title
+</script>
+</body>
+</html>
