@@ -324,7 +324,7 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
     <div class="panel-subtitle">Every great merchant is remembered by their name.</div>
     <div class="field-row">
       <label>YOUR NAME:</label>
-      <input type="text" id="input-merchant-name" maxlength="22" placeholder="e.g. Ahmad ibn Fadlan">
+      <input type="text" id="input-merchant-name" maxlength="22" placeholder="">
     </div>
     <div style="color:var(--dim);font-size:9px;margin-bottom:10px;">YOUR FIVE CREW MEMBERS:</div>
     <div id="crew-inputs"></div>
@@ -340,6 +340,12 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
   <div class="panel">
     <div class="panel-title" id="market-title">LOCAL MARKET</div>
     <div class="panel-subtitle" id="market-subtitle"></div>
+    <div id="city-info-block" style="display:none;margin-bottom:14px;">
+      <div style="text-align:center;margin-bottom:10px;">
+        <img id="city-info-img" src="" alt="" style="max-width:100%;max-height:180px;border:2px solid var(--border);border-radius:4px;">
+      </div>
+      <div id="city-info-text" style="font-size:9px;color:var(--text);line-height:2;white-space:pre-line;border:1px solid var(--border);padding:10px;background:#050e1c;border-radius:4px;"></div>
+    </div>
     <div id="repair-notice" style="display:none;" class="notice" style="border-color:var(--yellow);"></div>
     <div class="market-tip">⚠ WISE MERCHANT'S TIP: Keep at least 200 dinars in reserve! Storms may damage your hull (200 dinar repair), and pirates can seize your entire cargo. You may borrow up to 200 dinars in an emergency — but debt is dangerous at sea.</div>
     <p style="font-size:9px;color:var(--dim);margin-bottom:12px;">Buy up to 3 types of goods. Enter how many units you want of each.</p>
@@ -415,6 +421,20 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
       <div class="btn-row">
         <button class="btn btn-green" id="btn-after-journey" onclick="afterJourney()">ARRIVE AT PORT ▶</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PORT WELCOME ===== -->
+<div id="screen-port-welcome" class="screen">
+  <div class="panel">
+    <div class="panel-title" id="port-welcome-title"></div>
+    <div id="port-welcome-img-wrap" style="text-align:center;margin:10px 0 14px;">
+      <img id="port-welcome-img" src="" alt="" style="max-width:100%;max-height:220px;border:2px solid var(--border);border-radius:4px;display:none;">
+    </div>
+    <div id="port-welcome-text" style="font-size:9px;color:var(--text);line-height:2;white-space:pre-line;margin-bottom:16px;"></div>
+    <div class="btn-row">
+      <button class="btn btn-green" onclick="proceedFromWelcome()">CONTINUE ▶</button>
     </div>
   </div>
 </div>
@@ -541,7 +561,8 @@ const LOCAL_GOODS = {
   ],
   'Hormuz':[
     {name:'Perfumes',    price:50,  unit:'crate', why:'Hormuz was the export hub for luxury goods from Central Asia and Baghdad.', want:'A luxury item prized by the wealthy across the world.'},
-    {name:'Lapis Lazuli', price:500, unit:'crate', why:'From the mines of Afghanistan, exported through Hormuz.', want:'Used for jewelry and decoration; a sign of immense wealth.'}
+    {name:'Lapis Lazuli', price:500, unit:'crate', why:'From the mines of Afghanistan, exported through Hormuz.', want:'Used for jewelry and decoration; a sign of immense wealth.'},
+    {name:'Saffron',     price:100, unit:'crate', why:'The finest saffron in the world came from Persia and Central Asia, traded through Hormuz.', want:'A precious spice and dye used in cooking, medicine, and luxury textiles.'}
   ],
   'Kilwa':[
     {name:'Gold',        price:250, unit:'crate', why:'The Swahili coast was the gateway to gold from the kingdom of Greater Zimbabwe.', want:'Luxury good and currency; desired everywhere.'},
@@ -555,12 +576,12 @@ const LOCAL_GOODS = {
 };
 
 const SELL_PRICES = {
-  'Cairo':   {'Nutmeg':{p:150,u:'crate'},'Cloves and Cinnamon':{p:150,u:'crate'},'Pepper':{p:75,u:'crate'},'Gold':{p:300,u:'crate'},'Silk':{p:75,u:'bolt'},'Cotton Textiles':{p:10,u:'bolt'},'Porcelain':{p:125,u:'crate'},'Tea':{p:150,u:'crate'},'Lapis Lazuli':{p:600,u:'crate'},'Ivory':{p:150,u:'tusk'},'Precious Stones':{p:750,u:'crate'}},
-  'Calicut': {'Gold':{p:400,u:'crate'},'Silk':{p:50,u:'bolt'},'Porcelain':{p:100,u:'crate'},'Cloves and Cinnamon':{p:100,u:'crate'},'Perfumes':{p:100,u:'crate'},'Iron':{p:100,u:'bar'},'Tea':{p:150,u:'crate'}},
-  'Guangzhou':  {'Cloves and Cinnamon':{p:75,u:'crate'},'Ivory':{p:300,u:'tusk'},'Gold':{p:400,u:'crate'},'Pepper':{p:100,u:'crate'},'Glassware':{p:200,u:'crate'},'Cotton Textiles':{p:15,u:'bolt'}},
+  'Cairo':   {'Nutmeg':{p:150,u:'crate'},'Cloves and Cinnamon':{p:150,u:'crate'},'Pepper':{p:75,u:'crate'},'Gold':{p:300,u:'crate'},'Silk':{p:75,u:'bolt'},'Cotton Textiles':{p:10,u:'bolt'},'Porcelain':{p:125,u:'crate'},'Tea':{p:150,u:'crate'},'Lapis Lazuli':{p:600,u:'crate'},'Ivory':{p:150,u:'tusk'},'Precious Stones':{p:750,u:'crate'},'Saffron':{p:200,u:'crate'}},
+  'Calicut': {'Gold':{p:400,u:'crate'},'Silk':{p:50,u:'bolt'},'Porcelain':{p:100,u:'crate'},'Cloves and Cinnamon':{p:100,u:'crate'},'Perfumes':{p:100,u:'crate'},'Iron':{p:100,u:'bar'},'Tea':{p:150,u:'crate'},'Saffron':{p:125,u:'crate'}},
+  'Guangzhou':  {'Cloves and Cinnamon':{p:75,u:'crate'},'Ivory':{p:300,u:'tusk'},'Gold':{p:400,u:'crate'},'Pepper':{p:100,u:'crate'},'Glassware':{p:200,u:'crate'},'Cotton Textiles':{p:15,u:'bolt'},'Saffron':{p:200,u:'crate'}},
   'Hormuz':  {'Cloves and Cinnamon':{p:150,u:'crate'},'Nutmeg':{p:150,u:'crate'},'Cotton Textiles':{p:15,u:'bolt'},'Iron':{p:75,u:'bar'},'Porcelain':{p:125,u:'crate'},'Tea':{p:150,u:'crate'},'Gold':{p:300,u:'crate'},'Pepper':{p:75,u:'crate'},'Silk':{p:40,u:'bolt'},'Ivory':{p:200,u:'tusk'}},
-  'Kilwa':   {'Cotton Textiles':{p:15,u:'bolt'},'Pepper':{p:75,u:'crate'},'Cloves and Cinnamon':{p:150,u:'crate'},'Precious Stones':{p:750,u:'crate'},'Porcelain':{p:150,u:'crate'},'Glassware':{p:150,u:'crate'},'Silk':{p:50,u:'bolt'}},
-  'Malacca': {'Cotton Textiles':{p:10,u:'bolt'},'Gold':{p:350,u:'crate'},'Ivory':{p:200,u:'tusk'},'Porcelain':{p:100,u:'crate'},'Silk':{p:40,u:'bolt'},'Precious Stones':{p:650,u:'crate'},'Tea':{p:125,u:'crate'},'Iron':{p:75,u:'bar'}}
+  'Kilwa':   {'Cotton Textiles':{p:15,u:'bolt'},'Pepper':{p:75,u:'crate'},'Cloves and Cinnamon':{p:150,u:'crate'},'Precious Stones':{p:750,u:'crate'},'Porcelain':{p:150,u:'crate'},'Glassware':{p:150,u:'crate'},'Silk':{p:50,u:'bolt'},'Saffron':{p:200,u:'crate'}},
+  'Malacca': {'Cotton Textiles':{p:10,u:'bolt'},'Gold':{p:350,u:'crate'},'Ivory':{p:200,u:'tusk'},'Porcelain':{p:100,u:'crate'},'Silk':{p:40,u:'bolt'},'Precious Stones':{p:650,u:'crate'},'Tea':{p:125,u:'crate'},'Iron':{p:75,u:'bar'},'Saffron':{p:200,u:'crate'}}
 };
 
 // OCEAN JOURNEY EVENTS (Ten-sided die — roll 1–10)
@@ -643,6 +664,36 @@ const PORT_COORDS = {
   'Calicut': [478, 372],
   'Malacca': [652, 388],
   'Guangzhou':  [808, 198]
+};
+
+// ============================================================
+// PORT CITY INFO (welcome screens + market descriptions)
+// ============================================================
+const PORT_CITY_INFO = {
+  'Guangzhou': {
+    img: 'Guangzhou.png',
+    text: `China was the engine of the global luxury goods market in the Middle Ages. Thanks to its urbanized population and highly skilled craftsmen, the goods produced here are status symbols for the moneyed elite in nearly every corner of the global marketplace. It didn't matter if you were in the African interior or a palace in Samarkand — wealthy people showed off by displaying Chinese porcelain and wearing Chinese silks.\n\nWhile China went through periods of isolation, this is 1300 CE! The Mongols are rulers of China, and they have a strong interest in promoting trade to increase their tax revenue!`
+  },
+  'Cairo': {
+    img: 'Cairo.png',
+    text: `By 1300, this ancient city was having a resurgence under the Mamluk Sultanate. Its population of nearly 500,000 made it the largest city outside of China. In many ways, this city is the bridge between the east and the west, the marketplace where European merchants can access exotic foreign luxury goods and spices from Asia or gold and ivory from the African interior.\n\nWhile Islamic rulers have established mosques, madrassas, and marketplaces here for over 500 years, the population remains a blend of Islamic, Coptic Christian, and Jewish faiths, with Berbers, Byzantines, and Italians regularly visiting to trade in the bazaars.`
+  },
+  'Calicut': {
+    img: 'Calicut.png',
+    text: `For centuries, the monsoon winds have brought travelers safely to India's Malabar Coast on its southeastern shore. Centrally located on the Indian Ocean trade network, this port is known far and wide as the "City of Spices," but it is also the best and cheapest producer of high-quality cotton textiles anywhere in the world. Thanks to its abundant and cheap food supply, the cost of labor here is lower than anywhere else, and the climate is perfect for growing the rare and labor-intensive cotton crop.\n\nThe Hindu rulers of these Malabar coast city-states rely heavily on the revenues they receive from Arab, Indian, and African merchants who make it to their city.`
+  },
+  'Hormuz': {
+    img: 'Hormuz.png',
+    text: `An old Arabic saying states, "If all the world were a golden ring, Ormus (Hormuz) would be the jewel in it." This tiny kingdom was located at a strategic chokepoint in international trade, the Strait of Hormuz. To its south was the Arabian Sea and the Indian Ocean trade network that relied on the monsoon winds to safely transport wealth between Africa and India. The wealthy lands of Persia lay to the north, and to its northwest was the Persian Gulf and Mesopotamia, including Baghdad.\n\nHormuz did not produce much on its own — it did not have fertile lands, a large population, or any precious natural resources desired by wealthy elites. It only had location, location, location — and that was all it needed to become a jewel of the Muslim world. For that reason, you'll find that this is more of an "import" city to sell your goods than it is an "export" city.`
+  },
+  'Kilwa': {
+    img: 'Kilwa.png',
+    text: `This city is the largest and most important of all the Swahili Coast city-states. While merchants had been riding the monsoon winds for centuries, sometime starting in the late first millennium the local Bantu cultures began intermarrying and merging with the arriving Arab-Muslim merchants to create an entirely new culture — and a new lingua franca of Swahili.\n\nThese cities became the middlemen between the African interior and the outside Indian Ocean trading network. Leaders exchanged gold, ivory, and other natural resources from the interior for luxury items like porcelain, cotton textiles, and pepper.`
+  },
+  'Malacca': {
+    img: 'Malacca.png',
+    text: `Like Hormuz, this city is located at a strategic chokepoint for trade in the Indian Ocean. (Today, it is overshadowed by its much larger neighbors, Kuala Lumpur and Singapore.) It was the midway point between China and India and the closest port to the "Spice Islands" to the south. These spice islands were tiny microclimates, dangerous to navigate, and the only location where precious spices like cinnamon, nutmeg, and cloves could be grown.\n\nRather than venture into the unknown archipelago filled with dangerous rocks, inhabitants, and animals, it made far more sense for foreign merchants to arrive here and wait for local traders to come to them with the highly desired spices.`
+  }
 };
 
 // ============================================================
@@ -795,7 +846,7 @@ function buildCrewInputs(){
   el.innerHTML = [1,2,3,4,5].map(n=>`
     <div class="field-row">
       <label>CREW MEMBER ${n}:</label>
-      <input type="text" id="crew-${n}" maxlength="22" placeholder="e.g. Fatima al-Rashid">
+      <input type="text" id="crew-${n}" maxlength="22" placeholder="">
     </div>
   `).join('');
 }
@@ -839,6 +890,18 @@ function openMarket(skipRepairCheck){
     repairDiv.innerHTML = '⚓ SHIP REPAIR: You must pay <strong style="color:var(--yellow)">200 dinars</strong> for hull repairs before purchasing. This will be deducted automatically.';
   } else {
     repairDiv.style.display = 'none';
+  }
+
+  // City info block
+  const cityInfo = PORT_CITY_INFO[port];
+  const cityBlock = document.getElementById('city-info-block');
+  if(cityInfo){
+    document.getElementById('city-info-img').src = cityInfo.img;
+    document.getElementById('city-info-img').alt = port;
+    document.getElementById('city-info-text').textContent = cityInfo.text;
+    cityBlock.style.display = 'block';
+  } else {
+    cityBlock.style.display = 'none';
   }
 
   document.getElementById('market-dinars').textContent = G.dinars.toLocaleString() + ' dinars';
@@ -1082,7 +1145,27 @@ function afterJourney(){
   G.legs++;
   advanceDate();
   updateHUD();
-  // If going home, skip port event
+  openPortWelcome();
+}
+
+function openPortWelcome(){
+  const port = G.currentPort;
+  const info = PORT_CITY_INFO[port];
+  document.getElementById('port-welcome-title').textContent = '⚓ WELCOME TO ' + port.toUpperCase() + '!';
+  const img = document.getElementById('port-welcome-img');
+  if(info && info.img){
+    img.src = info.img;
+    img.alt = port;
+    img.style.display = 'block';
+  } else {
+    img.style.display = 'none';
+  }
+  document.getElementById('port-welcome-text').textContent = info ? info.text : '';
+  showScreen('port-welcome');
+}
+
+function proceedFromWelcome(){
+  // If going home, skip port event and go straight to sell
   if(G.currentPort === G.homePort){
     goToSellHome();
   } else {
