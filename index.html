@@ -347,7 +347,15 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
       <div id="city-info-text" style="font-size:9px;color:var(--text);line-height:2;white-space:pre-line;border:1px solid var(--border);padding:10px;background:#050e1c;border-radius:4px;"></div>
     </div>
     <div id="repair-notice" style="display:none;" class="notice" style="border-color:var(--yellow);"></div>
-    <div class="market-tip">⚠ WISE MERCHANT'S TIP: Keep at least 200 dinars in reserve! Storms may damage your hull (200 dinar repair), and pirates can seize your entire cargo. You may borrow up to 200 dinars in an emergency — but debt is dangerous at sea.</div>
+    <div id="loan-offer" style="display:none;border:2px solid var(--red);background:#1a0505;padding:12px;margin-bottom:12px;text-align:center;">
+      <div style="color:var(--red);font-size:10px;margin-bottom:6px;">💸 YOU ARE BROKE!</div>
+      <div style="color:var(--text);font-size:9px;margin-bottom:10px;">A local moneylender offers you <strong style="color:var(--gold)">200 dinars</strong> to get back on your feet.<br>You must repay <strong style="color:var(--red)">400 dinars</strong> when you return to your home port.</div>
+      <button class="btn btn-red" onclick="takeLoan()">💰 BORROW 200 DINARS (REPAY 400 AT HOME)</button>
+    </div>
+    <div id="loan-active-notice" style="display:none;border:1px solid var(--red);background:#1a0505;padding:8px;margin-bottom:10px;font-size:9px;color:var(--red);text-align:center;">
+      ⚠ LOAN ACTIVE: You owe <strong>400 dinars</strong> to be repaid at your home port.
+    </div>
+    <div class="market-tip">⚠ WISE MERCHANT'S TIP: Keep at least 200 dinars in reserve! Storms may damage your hull (200 dinar repair), and pirates can seize your entire cargo.</div>
     <p style="font-size:9px;color:var(--dim);margin-bottom:12px;">Buy up to 3 types of goods. Enter how many units you want of each.</p>
     <div id="goods-list"></div>
     <div style="background:#050e1c;border:1px solid var(--border);padding:10px;margin:10px 0;font-size:9px;">
@@ -407,6 +415,11 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
   <div class="panel">
     <div class="panel-title">⛵ OCEAN JOURNEY</div>
     <div id="journey-travel-text" style="text-align:center;color:var(--dim);font-size:9px;margin-bottom:14px;"></div>
+    <div style="color:#ffffff;font-size:9px;line-height:2;margin-bottom:14px;border-left:2px solid var(--border);padding-left:10px;">
+      "No one had ever accomplished this journey without an accident. To reach China and not perish on the way — that, in and of itself, was regarded as a considerable feat." — <em>The Book of the Marvels of India</em>, 900s
+      <br><br>
+      "The constant companion of the medieval traveler on the open oceans was terror." — Historian William J. Bernstein, <em>The Splendid Exchange</em>
+    </div>
     <div style="text-align:center;margin-bottom:10px;">
       <button class="btn btn-big" id="btn-roll-journey" onclick="rollJourney()">🎲 ROLL THE DIE</button>
     </div>
@@ -421,6 +434,10 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
       <div class="btn-row">
         <button class="btn btn-green" id="btn-after-journey" onclick="afterJourney()">ARRIVE AT PORT ▶</button>
       </div>
+    </div>
+    <div style="margin-top:18px;text-align:center;">
+      <video src="Dhowdroneshot.mp4" autoplay loop muted playsinline
+        style="max-width:100%;border:2px solid var(--border);border-radius:4px;"></video>
     </div>
   </div>
 </div>
@@ -490,6 +507,10 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
 <div id="screen-home" class="screen">
   <div class="panel" style="text-align:center;">
     <div class="panel-title" style="color:var(--green);">⚓ YOU MADE IT HOME!</div>
+    <div style="margin:14px 0;">
+      <video src="Dhowsideshot.mp4" autoplay loop muted playsinline
+        style="max-width:100%;border:2px solid var(--border);border-radius:4px;"></video>
+    </div>
     <div id="home-summary"></div>
     <div class="btn-row">
       <button class="btn btn-big btn-green" onclick="restartLife()">▶ SAIL AGAIN</button>
@@ -551,8 +572,7 @@ const LOCAL_GOODS = {
   'Calicut':[
     {name:'Cotton Textiles', price:5,  unit:'bolt',  why:'India\'s climate and cheap labor made cotton the cheapest in the world.', want:'Cheaper and higher quality than anywhere else until the 1800s.'},
     {name:'Pepper',      price:50,  unit:'crate', why:'Pepper grows abundantly along the Malabar Coast.', want:'Highly desired as both food and medicine for millennia.'},
-    {name:'Precious Stones', price:500, unit:'crate', why:'Natural resources of the Indian subcontinent.', want:'Luxury item for jewelry across the world.'},
-    {name:'Glassware',       price:200, unit:'crate', why:'Fine glassware arrived in Calicut via Persian Gulf trading networks from Cairo and Venice.', want:'A luxury status symbol prized by wealthy buyers across Asia and Africa.'}
+    {name:'Precious Stones', price:500, unit:'crate', why:'Natural resources of the Indian subcontinent.', want:'Luxury item for jewelry across the world.'}
   ],
   'Guangzhou':[
     {name:'Silk',        price:25,  unit:'bolt',  why:'China maintained a monopoly on silk production for centuries.', want:'Highly desired luxury good; a sign of wealth and sophistication.'},
@@ -578,7 +598,7 @@ const LOCAL_GOODS = {
 const SELL_PRICES = {
   'Cairo':   {'Nutmeg':{p:150,u:'crate'},'Cloves and Cinnamon':{p:150,u:'crate'},'Pepper':{p:75,u:'crate'},'Gold':{p:300,u:'crate'},'Silk':{p:75,u:'bolt'},'Cotton Textiles':{p:10,u:'bolt'},'Porcelain':{p:125,u:'crate'},'Tea':{p:150,u:'crate'},'Lapis Lazuli':{p:600,u:'crate'},'Ivory':{p:150,u:'tusk'},'Precious Stones':{p:750,u:'crate'},'Saffron':{p:200,u:'crate'}},
   'Calicut': {'Gold':{p:400,u:'crate'},'Silk':{p:50,u:'bolt'},'Porcelain':{p:100,u:'crate'},'Cloves and Cinnamon':{p:100,u:'crate'},'Perfumes':{p:100,u:'crate'},'Iron':{p:100,u:'bar'},'Tea':{p:150,u:'crate'},'Saffron':{p:125,u:'crate'}},
-  'Guangzhou':  {'Cloves and Cinnamon':{p:75,u:'crate'},'Ivory':{p:300,u:'tusk'},'Gold':{p:400,u:'crate'},'Pepper':{p:100,u:'crate'},'Glassware':{p:200,u:'crate'},'Cotton Textiles':{p:15,u:'bolt'},'Saffron':{p:200,u:'crate'}},
+  'Guangzhou':  {'Cloves and Cinnamon':{p:75,u:'crate'},'Ivory':{p:300,u:'tusk'},'Gold':{p:400,u:'crate'},'Pepper':{p:100,u:'crate'},'Glassware':{p:200,u:'crate'},'Cotton Textiles':{p:15,u:'bolt'},'Saffron':{p:200,u:'crate'},'Precious Stones':{p:800,u:'crate'}},
   'Hormuz':  {'Cloves and Cinnamon':{p:150,u:'crate'},'Nutmeg':{p:150,u:'crate'},'Cotton Textiles':{p:15,u:'bolt'},'Iron':{p:75,u:'bar'},'Porcelain':{p:125,u:'crate'},'Tea':{p:150,u:'crate'},'Gold':{p:300,u:'crate'},'Pepper':{p:75,u:'crate'},'Silk':{p:40,u:'bolt'},'Ivory':{p:200,u:'tusk'}},
   'Kilwa':   {'Cotton Textiles':{p:15,u:'bolt'},'Pepper':{p:75,u:'crate'},'Cloves and Cinnamon':{p:150,u:'crate'},'Precious Stones':{p:750,u:'crate'},'Porcelain':{p:150,u:'crate'},'Glassware':{p:150,u:'crate'},'Silk':{p:50,u:'bolt'},'Saffron':{p:200,u:'crate'}},
   'Malacca': {'Cotton Textiles':{p:10,u:'bolt'},'Gold':{p:350,u:'crate'},'Ivory':{p:200,u:'tusk'},'Porcelain':{p:100,u:'crate'},'Silk':{p:40,u:'bolt'},'Precious Stones':{p:650,u:'crate'},'Tea':{p:125,u:'crate'},'Iron':{p:75,u:'bar'},'Saffron':{p:200,u:'crate'}}
@@ -719,7 +739,8 @@ let G = {
   pendingRepair: false,
   repairPaid: false,
   legs: 0, // journey legs taken this life
-  firstLeg: true
+  firstLeg: true,
+  loanOwed: 0  // amount owed to moneylender on return home (borrowed 200, repay 400)
 };
 
 const MONTHS = ['April','October'];
@@ -892,6 +913,18 @@ function openMarket(skipRepairCheck){
     repairDiv.style.display = 'none';
   }
 
+  // Loan offer — show only at foreign ports when player is broke and hasn't already borrowed
+  const loanOffer = document.getElementById('loan-offer');
+  const loanNotice = document.getElementById('loan-active-notice');
+  const atHome = (port === G.homePort);
+  if(!atHome && G.dinars <= 0 && G.loanOwed === 0){
+    loanOffer.style.display = 'block';
+    loanNotice.style.display = 'none';
+  } else {
+    loanOffer.style.display = 'none';
+    loanNotice.style.display = (!atHome && G.loanOwed > 0) ? 'block' : 'none';
+  }
+
   // City info block
   const cityInfo = PORT_CITY_INFO[port];
   const cityBlock = document.getElementById('city-info-block');
@@ -947,23 +980,29 @@ function updateCart(){
   }
   updateCart._prevTotal = total;
   document.getElementById('cart-total').textContent = total.toLocaleString() + ' dinars';
-  const maxSpend = G.dinars + DEBT_LIMIT;
-  const pct = Math.min(100, Math.round(total / Math.max(maxSpend,1) * 100));
+  const pct = Math.min(100, Math.round(total / Math.max(G.dinars, 1) * 100));
   document.getElementById('spend-bar').style.width = pct + '%';
-  document.getElementById('market-dinars').textContent =
-    G.dinars.toLocaleString() + ' dinars' + (G.dinars < 0 ? ' (IN DEBT)' : '') +
-    ' (may borrow up to ' + DEBT_LIMIT + ')';
+  document.getElementById('market-dinars').textContent = G.dinars.toLocaleString() + ' dinars';
 
   const warn = document.getElementById('type-warning');
   if(types > 3){
     warn.style.display = 'block';
     warn.textContent = '⚠ Max 3 types of goods!';
-  } else if(total > maxSpend){
+  } else if(total > G.dinars){
     warn.style.display = 'block';
-    warn.textContent = '⚠ Exceeds credit limit! Max you can spend: ' + maxSpend.toLocaleString() + ' dinars';
+    warn.textContent = '⚠ Not enough dinars! You can spend up to ' + G.dinars.toLocaleString() + ' dinars';
   } else {
     warn.style.display = 'none';
   }
+}
+
+function takeLoan(){
+  G.dinars += 200;
+  G.loanOwed = 400;
+  document.getElementById('loan-offer').style.display = 'none';
+  document.getElementById('loan-active-notice').style.display = 'block';
+  document.getElementById('market-dinars').textContent = G.dinars.toLocaleString() + ' dinars';
+  updateHUD();
 }
 
 function retireHere(){
@@ -996,13 +1035,13 @@ function buyGoods(){
     }
   });
   if(types > 3){ alert('You can only buy up to 3 types of goods!'); return; }
-  if(total > G.dinars + DEBT_LIMIT){ alert('Exceeds your credit limit! Max: ' + (G.dinars + DEBT_LIMIT).toLocaleString() + ' dinars.'); return; }
+  if(total > G.dinars){ alert('You cannot afford that! You only have ' + G.dinars.toLocaleString() + ' dinars.'); return; }
   if(total === 0){ alert('Buy at least something before setting sail!'); return; }
 
-  // Deduct repair if needed (allowed to go into debt up to DEBT_LIMIT)
+  // Deduct repair if needed
   if(G.pendingRepair && !G.repairPaid){
-    if((G.dinars - total - 200) < -DEBT_LIMIT){
-      alert('You cannot afford ship repairs plus this purchase. Reduce your cart or you will exceed your credit limit.');
+    if((G.dinars - total - 200) < 0){
+      alert('You cannot afford ship repairs plus this purchase. Reduce your cart.');
       return;
     }
     G.dinars -= 200;
@@ -1283,7 +1322,8 @@ function buildSellScreen(isHome){
     });
   }
 
-  const newTotal = G.dinars + totalSale;
+  const loanRepayment = (isHome && G.loanOwed > 0) ? G.loanOwed : 0;
+  const newTotal = G.dinars + totalSale - loanRepayment;
   document.getElementById('sell-content').innerHTML = `
     <table class="sell-table">
       <tr><th>GOOD</th><th>QTY</th><th>PRICE</th><th>EARNINGS</th></tr>
@@ -1298,6 +1338,11 @@ function buildSellScreen(isHome){
         <span style="color:var(--dim)">DINARS IN HAND:</span>
         <span style="color:var(--gold)">${G.dinars.toLocaleString()} dinars</span>
       </div>
+      ${loanRepayment > 0 ? `
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="color:var(--red)">💸 LOAN REPAYMENT:</span>
+        <span style="color:var(--red)">−${loanRepayment.toLocaleString()} dinars</span>
+      </div>` : ''}
       <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:8px;font-size:11px;">
         <span style="color:var(--gold)">NEW TOTAL:</span>
         <span style="color:var(--gold);font-size:13px;">${newTotal.toLocaleString()} DINARS</span>
@@ -1322,6 +1367,11 @@ function completeSale(){
   updateHUD();
 
   if(G._isAtHome){
+    // Repay loan if outstanding
+    if(G.loanOwed > 0){
+      G.dinars -= G.loanOwed;
+      G.loanOwed = 0;
+    }
     // Victory! You made it home.
     if(G.dinars > G.bestDinars) G.bestDinars = G.dinars;
     addToLeaderboard();
@@ -1329,11 +1379,6 @@ function completeSale(){
     buildHomeScreen();
     showScreen('home');
   } else {
-    // Check debt death
-    if(G.dinars < -DEBT_LIMIT){
-      triggerDeath('You have fallen into unrecoverable debt. No merchant will extend you credit. Your trading days are over.');
-      return;
-    }
     openMarket();
   }
 }
@@ -1378,6 +1423,7 @@ function restartLife(){
   G.repairPaid = false;
   G.legs = 0;
   G.firstLeg = true;
+  G.loanOwed = 0;
   G.currentPort = G.homePort;
   G.date = {year:1301, monthIndex:0};
   G.crewAlive = [...G.crewNames]; // revive crew on restart
