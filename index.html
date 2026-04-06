@@ -33,8 +33,13 @@ body{
 .hud-label{color:var(--dim);font-size:8px;}
 .hud-val{color:var(--gold);}
 #game{width:100%;max-width:820px;}
-.screen{display:none;}
-.screen.active{display:block;}
+.screen{display:none;opacity:0;transition:opacity 0.4s ease;}
+.screen.active{display:block;opacity:1;}
+.screen.fading-in{opacity:1;}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.dice-spinning{display:inline-block;animation:spin 0.4s linear infinite;font-size:2em;}
+.suspense-dots{color:var(--gold);font-size:14px;letter-spacing:4px;}
+.para-fade{opacity:0;transition:opacity 0.6s ease;margin-bottom:1em;}
 
 /* MAP */
 #map-wrap{position:relative;width:100%;border:3px solid var(--border);overflow:hidden;}
@@ -410,6 +415,33 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
   </div>
 </div>
 
+<!-- ===== VOYAGE TRANSITION ===== -->
+<div id="screen-voyage" class="screen">
+  <div class="panel">
+    <div class="panel-title" id="voyage-title">⛵ SETTING SAIL...</div>
+    <div id="voyage-map-wrap" style="position:relative;border:3px solid var(--border);overflow:hidden;margin:12px 0;">
+      <img src="Indian Ocean Routes.jpg" style="display:block;width:100%;height:auto;" alt="Indian Ocean Trade Routes Map">
+      <svg id="voyage-map-overlay" viewBox="0 0 1000 715"
+        style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;">
+        <circle cx="65"  cy="193" r="8" fill="#f0c040" stroke="#000" stroke-width="2"/>
+        <text x="78"  y="188" class="port-label">CAIRO</text>
+        <circle cx="72"  cy="503" r="8" fill="#f0c040" stroke="#000" stroke-width="2"/>
+        <text x="85"  y="498" class="port-label">KILWA</text>
+        <circle cx="272" cy="213" r="8" fill="#f0c040" stroke="#000" stroke-width="2"/>
+        <text x="285" y="208" class="port-label">HORMUZ</text>
+        <circle cx="478" cy="372" r="8" fill="#f0c040" stroke="#000" stroke-width="2"/>
+        <text x="491" y="367" class="port-label">CALICUT</text>
+        <circle cx="652" cy="388" r="8" fill="#f0c040" stroke="#000" stroke-width="2"/>
+        <text x="665" y="383" class="port-label">MALACCA</text>
+        <circle cx="808" cy="198" r="8" fill="#f0c040" stroke="#000" stroke-width="2"/>
+        <text x="821" y="193" class="port-label">GUANGZHOU</text>
+        <text id="voyage-ship" x="0" y="0" style="font-size:22px;transition:transform 3.8s ease-in-out;">⛵</text>
+      </svg>
+    </div>
+    <div id="voyage-status" style="text-align:center;font-size:9px;color:var(--dim);margin-top:8px;letter-spacing:1px;"></div>
+  </div>
+</div>
+
 <!-- ===== JOURNEY EVENT ===== -->
 <div id="screen-journey" class="screen">
   <div class="panel">
@@ -686,6 +718,37 @@ const PORT_COORDS = {
   'Guangzhou':  [808, 198]
 };
 
+// Waypoint paths for voyage animation — each array is [x,y] points from start to end
+// following ocean routes (avoiding land masses). Reverse routes are generated automatically.
+const VOYAGE_PATHS = {
+  // Red Sea south → around Arabia → Hormuz
+  'Cairo→Hormuz':     [[65,193],[88,255],[125,285],[175,278],[228,248],[272,213]],
+  // Down Red Sea → East African coast
+  'Cairo→Kilwa':      [[65,193],[55,255],[50,335],[52,415],[62,462],[72,503]],
+  // Red Sea → Arabian Sea → Calicut
+  'Cairo→Calicut':    [[65,193],[90,262],[145,315],[225,350],[330,370],[425,375],[478,372]],
+  // Arabian Sea crossing
+  'Hormuz→Calicut':   [[272,213],[298,258],[348,308],[412,345],[458,365],[478,372]],
+  // Arabian Sea → around Horn → East Africa
+  'Hormuz→Kilwa':     [[272,213],[198,292],[138,368],[92,442],[72,503]],
+  // Indian Ocean crossing
+  'Kilwa→Calicut':    [[72,503],[158,480],[255,455],[358,428],[442,398],[478,372]],
+  // Bay of Bengal → Malacca
+  'Calicut→Malacca':  [[478,372],[512,402],[555,418],[596,408],[628,395],[652,388]],
+  // Bay of Bengal → Malacca → South China Sea
+  'Calicut→Guangzhou':[[478,372],[512,402],[568,418],[652,388],[708,338],[760,268],[808,198]],
+  // South China Sea
+  'Malacca→Guangzhou':[[652,388],[698,345],[748,288],[780,240],[808,198]],
+};
+
+function getVoyagePath(from, to){
+  const key = from + '→' + to;
+  const rev  = to + '→' + from;
+  if(VOYAGE_PATHS[key]) return VOYAGE_PATHS[key];
+  if(VOYAGE_PATHS[rev])  return [...VOYAGE_PATHS[rev]].reverse();
+  return [PORT_COORDS[from], PORT_COORDS[to]]; // fallback straight line
+}
+
 // ============================================================
 // PORT CITY INFO (welcome screens + market descriptions)
 // ============================================================
@@ -754,10 +817,28 @@ function advanceDate(){
 // SCREEN MANAGEMENT
 // ============================================================
 function showScreen(name){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  const el = document.getElementById('screen-'+name);
-  if(el) el.classList.add('active');
-  window.scrollTo(0,0);
+  const current = document.querySelector('.screen.active');
+  const next = document.getElementById('screen-'+name);
+  if(!next) return;
+  if(current && current !== next){
+    current.style.opacity = '0';
+    setTimeout(()=>{
+      document.querySelectorAll('.screen').forEach(s=>{
+        s.classList.remove('active');
+        s.style.opacity = '';
+      });
+      next.classList.add('active');
+      next.style.opacity = '0';
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        next.style.opacity = '1';
+      }));
+      window.scrollTo(0,0);
+    }, 350);
+  } else {
+    document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.opacity='';});
+    next.classList.add('active');
+    window.scrollTo(0,0);
+  }
 }
 
 function updateHUD(){
@@ -827,6 +908,42 @@ function animateShip(from, to, cb){
     ship.setAttribute('y', ty - 20);
     if(cb) setTimeout(cb, 1900);
   }, 300);
+}
+
+function openVoyageScreen(from, to, onComplete){
+  const ship = document.getElementById('voyage-ship');
+  const waypoints = getVoyagePath(from, to);
+  const TOTAL_MS = 4000;
+  const segMs = Math.round(TOTAL_MS / (waypoints.length - 1));
+
+  document.getElementById('voyage-title').textContent = '⛵ SAILING FROM ' + from.toUpperCase() + ' TO ' + to.toUpperCase() + '...';
+  document.getElementById('voyage-status').textContent = dateStr() + '  ·  Braving the open seas...';
+
+  // Snap ship to first waypoint instantly
+  ship.style.transition = 'none';
+  ship.style.transform = 'translate(' + (waypoints[0][0] - 8) + 'px, ' + (waypoints[0][1] - 20) + 'px)';
+
+  showScreen('voyage');
+
+  // After screen fades in, walk through each waypoint sequentially
+  setTimeout(()=>{
+    ship.getBoundingClientRect(); // force reflow so browser registers start position
+
+    function stepTo(i){
+      if(i >= waypoints.length){
+        onComplete();
+        return;
+      }
+      const [x, y] = waypoints[i];
+      // Use linear for middle points so speed feels constant; ease at very last step
+      const easing = (i === waypoints.length - 1) ? 'ease-out' : 'linear';
+      ship.style.transition = 'transform ' + segMs + 'ms ' + easing;
+      ship.style.transform = 'translate(' + (x - 8) + 'px, ' + (y - 20) + 'px)';
+      setTimeout(()=> stepTo(i + 1), segMs);
+    }
+
+    stepTo(1); // start from index 1 (ship is already at index 0)
+  }, 500);
 }
 
 // ============================================================
@@ -1111,49 +1228,78 @@ function openJourney(){
 }
 
 function rollJourney(){
-  document.getElementById('btn-roll-journey').disabled = true;
+  const btn = document.getElementById('btn-roll-journey');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="dice-spinning">🎲</span> <span class="suspense-dots">Rolling...</span>';
+
   const dice = document.getElementById('snd-dice');
-  dice.currentTime = 0; dice.play().catch(()=>{});
+  dice.currentTime = 0;
+  const dicePromise = dice.play().catch(()=>{});
+
   const snd = document.getElementById('snd-ocean');
   snd.currentTime = 0;
-  snd.play().catch(()=>{}); // catch in case browser blocks autoplay
+  snd.play().catch(()=>{});
+
   const roll = Math.floor(Math.random()*10)+1;
   const ev = JOURNEY_EVENTS[roll-1];
-  applyJourneyEffect(ev);
-  const resultDiv = document.getElementById('journey-result');
-  const box = document.getElementById('journey-event-box');
-  box.className = 'event-box ' + ev.color;
-  document.getElementById('journey-roll-num').textContent = '🎲 ' + roll;
-  document.getElementById('journey-event-title').textContent = ev.title;
-  document.getElementById('journey-event-desc').textContent = ev.desc;
-  const quoteEl = document.getElementById('journey-event-quote');
-  if(ev.quote){
-    quoteEl.style.display = 'block';
-    quoteEl.textContent = ev.quote;
-  } else {
-    quoteEl.style.display = 'none';
+
+  function showVoyageThenResult(){
+    btn.innerHTML = '🎲 ROLL THE DIE';
+    // Show the voyage map screen with ship sailing, then reveal result
+    openVoyageScreen(G.currentPort, G.destinationPort, ()=>{
+      applyJourneyEffect(ev);
+      const resultDiv = document.getElementById('journey-result');
+      const box = document.getElementById('journey-event-box');
+      box.className = 'event-box ' + ev.color;
+      box.style.opacity = '0';
+      document.getElementById('journey-roll-num').textContent = '🎲 ' + roll;
+      document.getElementById('journey-event-title').textContent = ev.title;
+      document.getElementById('journey-event-desc').textContent = ev.desc;
+      const quoteEl = document.getElementById('journey-event-quote');
+      if(ev.quote){
+        quoteEl.style.display = 'block';
+        quoteEl.textContent = ev.quote;
+      } else {
+        quoteEl.style.display = 'none';
+      }
+      const invEl = document.getElementById('journey-inv-after');
+      if(ev.effect === 'die'){
+        invEl.innerHTML = '';
+        document.getElementById('btn-after-journey').style.display = 'none';
+        showScreen('journey');
+        resultDiv.style.display = 'block';
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{
+          box.style.transition = 'opacity 0.5s ease';
+          box.style.opacity = '1';
+        }));
+        setTimeout(()=>triggerDeath(ev.desc), 2200);
+      } else {
+        document.getElementById('btn-after-journey').style.display = 'inline-block';
+        let extra = '';
+        if(ev.effect === 'crew_death' && G._lastDeadCrew){
+          extra = `<div class="crew-death-box">⚰ <strong>${G._lastDeadCrew}</strong> was lost at sea.<br>
+            <span style="color:var(--dim);font-size:8px;">Remaining crew: ${G.crewAlive.length > 0 ? G.crewAlive.join(', ') : 'None'}</span></div>`;
+          G._lastDeadCrew = null;
+        }
+        invEl.innerHTML = extra + renderInventorySummary();
+        showScreen('journey');
+        resultDiv.style.display = 'block';
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{
+          box.style.transition = 'opacity 0.5s ease';
+          box.style.opacity = '1';
+        }));
+      }
+      animateShip(G.currentPort, G.destinationPort);
+    });
   }
 
-  // Show inventory after effect
-  const invEl = document.getElementById('journey-inv-after');
-  if(ev.effect === 'die'){
-    invEl.innerHTML = '';
-    document.getElementById('btn-after-journey').style.display = 'none';
-    setTimeout(()=>triggerDeath(ev.desc), 2200);
-  } else {
-    document.getElementById('btn-after-journey').style.display = 'inline-block';
-    let extra = '';
-    if(ev.effect === 'crew_death' && G._lastDeadCrew){
-      extra = `<div class="crew-death-box">⚰ <strong>${G._lastDeadCrew}</strong> was lost at sea.<br>
-        <span style="color:var(--dim);font-size:8px;">Remaining crew: ${G.crewAlive.length > 0 ? G.crewAlive.join(', ') : 'None'}</span></div>`;
-      G._lastDeadCrew = null;
-    }
-    invEl.innerHTML = extra + renderInventorySummary();
-  }
-
-  resultDiv.style.display = 'block';
-  // Animate ship
-  animateShip(G.currentPort, G.destinationPort);
+  // Show voyage after dice sound ends, or after 2s max
+  const fallback = setTimeout(showVoyageThenResult, 2000);
+  dice.addEventListener('ended', function onEnd(){
+    clearTimeout(fallback);
+    dice.removeEventListener('ended', onEnd);
+    setTimeout(showVoyageThenResult, 200);
+  });
 }
 
 function applyJourneyEffect(ev){
@@ -1196,11 +1342,31 @@ function openPortWelcome(){
     img.src = info.img;
     img.alt = port;
     img.style.display = 'block';
+    img.style.opacity = '0';
+    img.style.transition = 'opacity 0.8s ease';
   } else {
     img.style.display = 'none';
   }
-  document.getElementById('port-welcome-text').textContent = info ? info.text : '';
+
+  // Build paragraphs with fade-in class
+  const textEl = document.getElementById('port-welcome-text');
+  const paragraphs = info ? info.text.split('\n\n') : [];
+  textEl.innerHTML = paragraphs.map(p =>
+    `<div class="para-fade">${p}</div>`
+  ).join('');
+
   showScreen('port-welcome');
+
+  // Stagger paragraph and image fade-ins after screen transition
+  setTimeout(()=>{
+    if(img.style.display !== 'none') img.style.opacity = '1';
+    const paras = textEl.querySelectorAll('.para-fade');
+    paras.forEach((p, i)=>{
+      setTimeout(()=>{
+        p.style.opacity = '1';
+      }, 400 + i * 500);
+    });
+  }, 450);
 }
 
 function proceedFromWelcome(){
@@ -1226,23 +1392,41 @@ function openPortEvent(){
 }
 
 function rollPort(){
-  document.getElementById('btn-roll-port').disabled = true;
+  const btn = document.getElementById('btn-roll-port');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="dice-spinning">🎲</span> <span class="suspense-dots">Rolling...</span>';
+
   const dice = document.getElementById('snd-dice');
-  dice.currentTime = 0; dice.play().catch(()=>{});
+  dice.currentTime = 0;
+  dice.play().catch(()=>{});
+
   const roll = Math.floor(Math.random()*10)+1;
   const ev = PORT_EVENTS[roll-1];
-  applyPortEffect(ev);
 
-  const box = document.getElementById('port-event-box');
-  box.className = 'event-box ' + ev.color;
-  document.getElementById('port-roll-num').textContent = '🎲 ' + roll;
-  document.getElementById('port-event-title').textContent = ev.title;
-  document.getElementById('port-event-desc').textContent = ev.desc;
+  function revealPortResult(){
+    btn.innerHTML = '🎲 ROLL THE DIE';
+    applyPortEffect(ev);
+    const box = document.getElementById('port-event-box');
+    box.className = 'event-box ' + ev.color;
+    box.style.opacity = '0';
+    document.getElementById('port-roll-num').textContent = '🎲 ' + roll;
+    document.getElementById('port-event-title').textContent = ev.title;
+    document.getElementById('port-event-desc').textContent = ev.desc;
+    const invEl = document.getElementById('port-inv-after');
+    invEl.innerHTML = renderInventorySummary();
+    document.getElementById('port-result').style.display = 'block';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      box.style.transition = 'opacity 0.5s ease';
+      box.style.opacity = '1';
+    }));
+  }
 
-  const invEl = document.getElementById('port-inv-after');
-  invEl.innerHTML = renderInventorySummary();
-
-  document.getElementById('port-result').style.display = 'block';
+  const fallback = setTimeout(revealPortResult, 2000);
+  dice.addEventListener('ended', function onEnd(){
+    clearTimeout(fallback);
+    dice.removeEventListener('ended', onEnd);
+    setTimeout(revealPortResult, 200);
+  });
 }
 
 function applyPortEffect(ev){
