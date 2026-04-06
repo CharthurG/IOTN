@@ -1423,7 +1423,8 @@ function rollJourney(){
   const btn = document.getElementById('btn-roll-journey');
   btn.disabled = true;
 
-  const roll = Math.floor(Math.random()*10)+1;
+  // First voyage is always smooth sailing — ease students into the game
+  const roll = G.legs === 0 ? 7 : Math.floor(Math.random()*10)+1;
   const ev = JOURNEY_EVENTS[roll-1];
 
   btn.innerHTML = '<span class="dice-spinning">🎲</span> <span class="suspense-dots">Rolling...</span>';
@@ -1602,7 +1603,9 @@ function rollPort(){
   const btn = document.getElementById('btn-roll-port');
   btn.disabled = true;
 
-  const roll = Math.floor(Math.random()*10)+1;
+  // First foreign port gets one re-roll if the outcome is negative — 50% less risk
+  let roll = Math.floor(Math.random()*10)+1;
+  if(G.legs === 1 && roll <= 3) roll = Math.floor(Math.random()*10)+1;
   const ev = PORT_EVENTS[roll-1];
 
   btn.innerHTML = '<span class="dice-spinning">🎲</span> <span class="suspense-dots">Rolling...</span>';
