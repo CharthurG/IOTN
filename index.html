@@ -4,25 +4,41 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Indian Ocean Trade Simulation</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <audio id="snd-ocean" src="oceanwaves.mp3" preload="auto"></audio>
 <audio id="snd-coin" src="coinsound.mp3" preload="auto"></audio>
 <audio id="snd-music" src="loopingmusic.mp3" preload="auto" loop></audio>
 <audio id="snd-dice" src="diceroll.mp3" preload="auto"></audio>
+<audio id="snd-ding" src="ding.mp3" preload="auto"></audio>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --gold:#f0c040;--dkgold:#a07010;--ocean:#071428;--deep:#030c18;
   --green:#3cd060;--red:#e04848;--yellow:#f0d040;--text:#e8d080;
-  --dim:#806020;--panel:#0d1f38;--border:#2a4a70;
+  --dim:#b09050;--panel:#102240;--border:#2a4a70;
+  --font-body:'EB Garamond',Georgia,serif;
+  --font-pixel:'Press Start 2P','Courier New',monospace;
 }
 body{
   background:var(--deep);color:var(--text);
-  font-family:'Press Start 2P','Courier New',monospace;
-  font-size:11px;line-height:1.8;
+  font-family:var(--font-body);
+  font-size:17px;line-height:1.6;
   min-height:100vh;display:flex;flex-direction:column;
   align-items:center;padding:10px 6px;
 }
+/* ── Elements that keep the pixel / arcade font ── */
+.panel-title,.game-title,.game-sub,
+.btn,.route-btn,
+.hud-label,.hud-val,.date-badge,
+.death-msg,.roll-num,.event-title,
+#gloss-word,
+input[type=text],input[type=number],label,
+.good-name,.inv-name,
+.sell-table th,.score-table th,.lb-table th,
+.suspense-dots,.port-label {
+  font-family:var(--font-pixel);
+}
+
 #hud{
   width:100%;max-width:820px;background:var(--panel);
   border:2px solid var(--border);padding:8px 12px;
@@ -49,7 +65,7 @@ body{
 /* PANELS */
 .panel{background:var(--panel);border:2px solid var(--border);padding:16px;margin-bottom:10px;}
 .panel-title{color:var(--gold);font-size:13px;margin-bottom:14px;text-align:center;text-shadow:2px 2px var(--dkgold);letter-spacing:1px;}
-.panel-subtitle{color:var(--dim);font-size:9px;margin-bottom:12px;text-align:center;}
+.panel-subtitle{color:var(--dim);font-size:15px;margin-bottom:12px;text-align:center;}
 
 /* BUTTONS */
 .btn{
@@ -88,8 +104,8 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
 }
 .char-card:hover,.char-card.selected{border-color:var(--gold);}
 .char-card h3{color:var(--gold);font-size:10px;margin-bottom:6px;}
-.char-card p{font-size:8px;color:var(--text);line-height:1.7;}
-.char-home{color:var(--dim);font-size:8px;margin-top:6px;}
+.char-card p{font-size:15px;color:var(--text);line-height:1.5;}
+.char-home{color:var(--dim);font-size:14px;margin-top:6px;}
 
 /* MARKET */
 .good-row{
@@ -98,14 +114,14 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
   display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;
 }
 .good-name{color:var(--gold);font-size:10px;}
-.good-price{color:var(--text);font-size:9px;white-space:nowrap;}
+.good-price{color:var(--text);font-size:15px;white-space:nowrap;}
 .good-qty{width:70px !important;margin:0;}
-.good-desc{font-size:8px;color:var(--dim);grid-column:1/-1;margin-top:4px;}
+.good-desc{font-size:13px;color:var(--dim);grid-column:1/-1;margin-top:4px;}
 
 /* INVENTORY */
 .inv-row{
   display:flex;justify-content:space-between;align-items:center;
-  padding:6px 8px;border-bottom:1px solid var(--border);font-size:9px;
+  padding:6px 8px;border-bottom:1px solid var(--border);font-size:15px;
 }
 .inv-row:last-child{border-bottom:none;}
 .inv-name{color:var(--gold);}
@@ -114,18 +130,18 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
 
 /* EVENTS */
 .event-box{
-  border:3px solid;padding:16px;margin:10px 0;text-align:center;
+  border:3px solid;padding:22px 20px;margin:10px 0;text-align:center;
 }
 .event-box.red{border-color:var(--red);background:#1a0505;}
 .event-box.green{border-color:var(--green);background:#051a0a;}
 .event-box.yellow{border-color:var(--yellow);background:#1a1405;}
-.event-title{font-size:14px;margin-bottom:10px;letter-spacing:1px;}
-.event-desc{font-size:9px;line-height:1.9;}
-.event-quote{font-style:italic;font-size:8px;color:var(--dim);margin-top:10px;border-top:1px solid;padding-top:8px;}
-.roll-num{font-size:40px;display:block;margin:8px 0;color:var(--gold);}
+.event-title{font-size:14px;margin-bottom:16px;letter-spacing:1px;}
+.event-desc{font-size:16px;line-height:1.65;max-width:640px;margin-left:auto;margin-right:auto;}
+.event-quote{font-style:italic;font-size:14px;color:var(--dim);margin-top:18px;border-top:1px solid;padding-top:14px;max-width:640px;margin-left:auto;margin-right:auto;line-height:1.6;}
+.roll-num{font-size:40px;display:block;margin:10px 0 16px;color:var(--gold);}
 
 /* SELL TABLE */
-.sell-table{width:100%;border-collapse:collapse;font-size:9px;}
+.sell-table{width:100%;border-collapse:collapse;font-size:15px;}
 .sell-table th{background:#0d1f38;color:var(--dim);padding:6px 8px;text-align:left;border:1px solid var(--border);}
 .sell-table td{padding:6px 8px;border:1px solid var(--border);}
 .sell-table tr:nth-child(even){background:#050e1c;}
@@ -150,7 +166,7 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
 /* SELL MODIFIER BANNER */
 .mod-banner{
   text-align:center;padding:8px;margin-bottom:10px;
-  font-size:10px;border:2px solid;
+  font-size:16px;border:2px solid;
 }
 .mod-banner.double{border-color:var(--green);color:var(--green);background:#051a0a;}
 .mod-banner.normal{border-color:var(--border);color:var(--dim);}
@@ -169,16 +185,16 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
 .route-btn.banned{border-color:#330000;color:#440000;cursor:not-allowed;}
 
 /* NOTICE */
-.notice{font-size:9px;padding:8px;margin:6px 0;border-left:3px solid var(--dim);color:var(--dim);line-height:1.9;}
+.notice{font-size:15px;padding:8px;margin:6px 0;border-left:3px solid var(--dim);color:var(--dim);line-height:1.5;}
 
 /* SCORE TABLE */
-.score-table{width:100%;border-collapse:collapse;font-size:9px;margin-top:10px;}
+.score-table{width:100%;border-collapse:collapse;font-size:15px;margin-top:10px;}
 .score-table th{background:var(--dkgold);color:#000;padding:8px;border:2px solid var(--gold);}
 .score-table td{padding:8px;border:1px solid var(--border);text-align:center;}
 .score-table tr:nth-child(even){background:#050e1c;}
 
 /* CREW LIST */
-.crew-list{margin:10px 0;font-size:9px;}
+.crew-list{margin:10px 0;font-size:15px;}
 .crew-list span{color:var(--gold);}
 
 /* progress bar */
@@ -186,22 +202,35 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
 .progress-bar{height:100%;background:var(--dkgold);transition:width .3s;}
 
 /* LEADERBOARD */
-.lb-table{width:100%;border-collapse:collapse;font-size:9px;margin-top:10px;}
+.lb-table{width:100%;border-collapse:collapse;font-size:15px;margin-top:10px;}
 .lb-table th{background:var(--dkgold);color:#000;padding:7px 8px;border:2px solid var(--gold);}
 .lb-table td{padding:7px 8px;border:1px solid var(--border);}
 .lb-table tr:nth-child(even){background:#050e1c;}
 .lb-rank{color:var(--gold);font-weight:bold;}
-.lb-empty{color:var(--dim);text-align:center;padding:20px;font-size:9px;}
+.lb-empty{color:var(--dim);text-align:center;padding:20px;font-size:15px;}
 
 /* MARKET TIP */
 .market-tip{
   background:#1a1405;border:2px solid var(--yellow);
-  color:var(--yellow);font-size:8px;padding:8px 10px;
+  color:var(--yellow);font-size:14px;padding:8px 10px;
   margin-bottom:12px;line-height:1.9;
 }
 
 /* DEBT warning */
 .dinars-debt{color:var(--red) !important;}
+
+/* GLOSSARY */
+.gloss-term{color:var(--gold);border-bottom:1px dotted var(--gold);cursor:pointer;white-space:nowrap;}
+.gloss-term:hover{color:#fff;}
+#gloss-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:999;align-items:center;justify-content:center;}
+#gloss-modal.open{display:flex;}
+#gloss-box{background:#0a1628;border:2px solid var(--gold);padding:20px 24px;max-width:420px;width:90%;border-radius:4px;text-align:center;}
+#gloss-word{color:var(--gold);font-size:13px;margin-bottom:10px;letter-spacing:2px;}
+#gloss-def{color:var(--text);font-size:16px;line-height:1.55;margin-bottom:16px;}
+#gloss-close{cursor:pointer;}
+
+/* PROSE — caps line length for readability on wide Chromebook screens */
+.prose{max-width:640px;margin-left:auto;margin-right:auto;}
 
 /* SPEAKER TOGGLE */
 #music-toggle{
@@ -217,7 +246,7 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
 /* CREW DEATH */
 .crew-death-box{
   border:2px solid #7a3030;background:#1a0505;
-  padding:10px;margin:8px 0;font-size:9px;
+  padding:10px;margin:8px 0;font-size:15px;
   color:var(--red);text-align:center;
 }
 </style>
@@ -252,6 +281,7 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
   </div>
   <div class="hud-item" style="align-self:center;margin-left:auto;">
     <button class="btn btn-red" onclick="confirmMainMenu()" style="font-size:8px;padding:6px 10px;margin:0;">⌂ MAIN MENU</button>
+    <button class="btn" onclick="openLog()" style="font-size:8px;padding:6px 10px;margin:0;" title="Ship's Log">📜 LOG</button>
     <button id="music-toggle" onclick="toggleMusic()" title="Toggle music">🔊</button>
   </div>
 </div>
@@ -287,7 +317,7 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
     <div style="text-align:center;padding:20px 10px;">
       <div class="game-title">INDIAN OCEAN<br>TRADE SIMULATION</div>
       <div class="game-sub">Economic Middle Men of the 1300s</div>
-      <p style="font-size:9px;color:var(--text);max-width:520px;margin:0 auto 16px;line-height:2;">
+      <p style="font-size:17px;color:var(--text);max-width:520px;margin:0 auto 16px;line-height:1.6;">
         This decentralized world largely drove the international economy in the medieval period.
         Can you make a fortune—or will the ocean swallow you whole?
       </p>
@@ -306,6 +336,18 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
     <div id="lb-content"></div>
     <div class="btn-row" style="margin-top:16px;">
       <button class="btn btn-big" onclick="goToTitle()">◀ BACK TO TITLE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SHIP'S LOG ===== -->
+<div id="screen-log" class="screen">
+  <div class="panel">
+    <div class="panel-title">📜 SHIP'S LOG</div>
+    <div class="panel-subtitle">A record of your voyage</div>
+    <div id="log-content" style="font-size:16px;line-height:1.6;max-height:420px;overflow-y:auto;padding:4px 0;"></div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-green" onclick="closeLog()">◀ BACK</button>
     </div>
   </div>
 </div>
@@ -331,7 +373,7 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
       <label>YOUR NAME:</label>
       <input type="text" id="input-merchant-name" maxlength="22" placeholder="">
     </div>
-    <div style="color:var(--dim);font-size:9px;margin-bottom:10px;">YOUR FIVE CREW MEMBERS:</div>
+    <div style="color:var(--dim);font-size:15px;margin-bottom:10px;">YOUR FIVE CREW MEMBERS:</div>
     <div id="crew-inputs"></div>
     <div class="btn-row">
       <button class="btn" onclick="showScreen('char-select')">◀ BACK</button>
@@ -349,21 +391,21 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
       <div style="text-align:center;margin-bottom:10px;">
         <img id="city-info-img" src="" alt="" style="max-width:100%;max-height:180px;border:2px solid var(--border);border-radius:4px;">
       </div>
-      <div id="city-info-text" style="font-size:9px;color:var(--text);line-height:2;white-space:pre-line;border:1px solid var(--border);padding:10px;background:#050e1c;border-radius:4px;"></div>
+      <div id="city-info-text" class="prose" style="font-size:16px;color:var(--text);line-height:1.55;white-space:pre-line;border:1px solid var(--border);padding:10px;background:#050e1c;border-radius:4px;"></div>
     </div>
     <div id="repair-notice" style="display:none;" class="notice" style="border-color:var(--yellow);"></div>
     <div id="loan-offer" style="display:none;border:2px solid var(--red);background:#1a0505;padding:12px;margin-bottom:12px;text-align:center;">
       <div style="color:var(--red);font-size:10px;margin-bottom:6px;">💸 YOU ARE BROKE!</div>
-      <div style="color:var(--text);font-size:9px;margin-bottom:10px;">A local moneylender offers you <strong style="color:var(--gold)">200 dinars</strong> to get back on your feet.<br>You must repay <strong style="color:var(--red)">400 dinars</strong> when you return to your home port.</div>
+      <div style="color:var(--text);font-size:16px;margin-bottom:10px;">A local moneylender offers you <strong style="color:var(--gold)">200 dinars</strong> to get back on your feet.<br>You must repay <strong style="color:var(--red)">400 dinars</strong> when you return to your home port.</div>
       <button class="btn btn-red" onclick="takeLoan()">💰 BORROW 200 DINARS (REPAY 400 AT HOME)</button>
     </div>
-    <div id="loan-active-notice" style="display:none;border:1px solid var(--red);background:#1a0505;padding:8px;margin-bottom:10px;font-size:9px;color:var(--red);text-align:center;">
+    <div id="loan-active-notice" style="display:none;border:1px solid var(--red);background:#1a0505;padding:8px;margin-bottom:10px;font-size:15px;color:var(--red);text-align:center;">
       ⚠ LOAN ACTIVE: You owe <strong>400 dinars</strong> to be repaid at your home port.
     </div>
     <div class="market-tip">⚠ WISE MERCHANT'S TIP: Keep at least 200 dinars in reserve! Storms may damage your hull (200 dinar repair), and pirates can seize your entire cargo.</div>
-    <p style="font-size:9px;color:var(--dim);margin-bottom:12px;">Buy up to 3 types of goods. Enter how many units you want of each.</p>
+    <p style="font-size:15px;color:var(--dim);margin-bottom:12px;">Buy up to 3 types of goods. Enter how many units you want of each.</p>
     <div id="goods-list"></div>
-    <div style="background:#050e1c;border:1px solid var(--border);padding:10px;margin:10px 0;font-size:9px;">
+    <div style="background:#050e1c;border:1px solid var(--border);padding:10px;margin:10px 0;font-size:15px;">
       <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
         <span style="color:var(--dim);">AVAILABLE DINARS:</span>
         <span id="market-dinars" style="color:var(--gold);"></span>
@@ -376,7 +418,7 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
         <div class="progress-bar" id="spend-bar" style="width:0%;"></div>
       </div>
     </div>
-    <div id="type-warning" style="display:none;color:var(--red);font-size:9px;margin:4px 0;"></div>
+    <div id="type-warning" style="display:none;color:var(--red);font-size:15px;margin:4px 0;"></div>
     <div class="btn-row">
       <button class="btn btn-green" onclick="buyGoods()">PURCHASE & CHOOSE DESTINATION ▶</button>
       <button class="btn btn-red" onclick="retireHere()" style="margin-top:6px;">🏖 RETIRE WHERE YOU ARE</button>
@@ -389,7 +431,7 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
   <div class="panel" style="text-align:center;">
     <div class="panel-title" style="color:var(--green);">🏖 YOU HAVE RETIRED!</div>
     <div style="font-size:28px;margin:14px 0;">☀️</div>
-    <p style="font-size:10px;color:var(--text);line-height:2.2;max-width:540px;margin:0 auto 18px;">
+    <p style="font-size:17px;color:var(--text);line-height:1.6;max-width:540px;margin:0 auto 18px;">
       The Indian Ocean merchant lifestyle is not for everyone!<br>
       Be glad you survived the perilous journey, and I hope you made a handsome profit!
     </p>
@@ -409,13 +451,25 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
     <div class="panel-subtitle" id="dest-subtitle"></div>
     <div id="map-mini" style="margin-bottom:12px;"></div>
     <div id="inv-display-dest"></div>
-    <p style="font-size:9px;color:var(--dim);margin:10px 0;">Where will you sail? Choose wisely — the seas are dangerous.</p>
+    <p style="font-size:15px;color:var(--dim);margin:10px 0;">Where will you sail? Choose wisely — the seas are dangerous.</p>
     <div class="route-list" id="route-buttons"></div>
     <div id="banned-notice" style="display:none;" class="notice"></div>
   </div>
 </div>
 
 <!-- ===== VOYAGE TRANSITION ===== -->
+<!-- ===== DID YOU KNOW ===== -->
+<div id="screen-didyouknow" class="screen">
+  <div class="panel" style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;">
+    <div style="color:var(--gold);font-size:11px;letter-spacing:3px;margin-bottom:18px;font-family:var(--font-pixel);">💡 DID YOU KNOW?</div>
+    <div id="dyk-text" class="prose" style="font-size:22px;color:var(--text);line-height:1.6;margin:0 auto 24px;"></div>
+    <div style="width:100%;background:#111;border-radius:4px;height:4px;overflow:hidden;max-width:300px;">
+      <div id="dyk-bar" style="height:100%;background:var(--gold);width:0%;transition:width 7s linear;"></div>
+    </div>
+    <div style="color:var(--dim);font-size:14px;margin-top:10px;">Continuing in <span id="dyk-counter">7</span> seconds...</div>
+  </div>
+</div>
+
 <div id="screen-voyage" class="screen">
   <div class="panel">
     <div class="panel-title" id="voyage-title">⛵ SETTING SAIL...</div>
@@ -438,7 +492,7 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
         <text id="voyage-ship" x="0" y="0" style="font-size:22px;transition:transform 3.8s ease-in-out;">⛵</text>
       </svg>
     </div>
-    <div id="voyage-status" style="text-align:center;font-size:9px;color:var(--dim);margin-top:8px;letter-spacing:1px;"></div>
+    <div id="voyage-status" style="text-align:center;font-size:14px;color:var(--dim);margin-top:8px;"></div>
   </div>
 </div>
 
@@ -446,8 +500,8 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
 <div id="screen-journey" class="screen">
   <div class="panel">
     <div class="panel-title">⛵ OCEAN JOURNEY</div>
-    <div id="journey-travel-text" style="text-align:center;color:var(--dim);font-size:9px;margin-bottom:14px;"></div>
-    <div style="color:#ffffff;font-size:9px;line-height:2;margin-bottom:14px;border-left:2px solid var(--border);padding-left:10px;">
+    <div id="journey-travel-text" style="text-align:center;color:var(--dim);font-size:15px;margin-bottom:14px;"></div>
+    <div class="prose" style="color:#ffffff;font-size:16px;line-height:1.6;margin-bottom:14px;border-left:2px solid var(--border);padding-left:10px;font-style:italic;">
       "No one had ever accomplished this journey without an accident. To reach China and not perish on the way — that, in and of itself, was regarded as a considerable feat." — <em>The Book of the Marvels of India</em>, 900s
       <br><br>
       "The constant companion of the medieval traveler on the open oceans was terror." — Historian William J. Bernstein, <em>The Splendid Exchange</em>
@@ -481,7 +535,7 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
     <div id="port-welcome-img-wrap" style="text-align:center;margin:10px 0 14px;">
       <img id="port-welcome-img" src="" alt="" style="max-width:100%;max-height:220px;border:2px solid var(--border);border-radius:4px;display:none;">
     </div>
-    <div id="port-welcome-text" style="font-size:9px;color:var(--text);line-height:2;white-space:pre-line;margin-bottom:16px;"></div>
+    <div id="port-welcome-text" class="prose" style="font-size:17px;color:var(--text);line-height:1.6;white-space:pre-line;margin-bottom:16px;"></div>
     <div class="btn-row">
       <button class="btn btn-green" onclick="proceedFromWelcome()">CONTINUE ▶</button>
     </div>
@@ -526,8 +580,8 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
   <div class="panel">
     <span class="skull">☠</span>
     <div class="death-msg" id="death-msg">YOU HAVE DIED.</div>
-    <p style="font-size:9px;color:var(--dim);margin:10px 0 20px;line-height:2;" id="death-detail"></p>
-    <p style="font-size:9px;color:var(--text);margin-bottom:16px;">Your family mourns. Your debts are forgotten.<br>But the ocean calls again...</p>
+    <p style="font-size:16px;color:var(--dim);margin:10px 0 20px;line-height:1.55;" id="death-detail"></p>
+    <p style="font-size:16px;color:var(--text);margin-bottom:16px;">Your family mourns. Your debts are forgotten.<br>But the ocean calls again...</p>
     <div style="color:var(--dim);font-size:9px;margin-bottom:6px;">TOTAL DEATHS: <span style="color:var(--red);" id="death-count-display">0</span></div>
     <button class="btn btn-big btn-red" onclick="restartLife()">▶ RETURN TO YOUR HOME PORT</button>
     <button class="btn btn-big" onclick="showLeaderboard()" style="margin-top:6px;">🏆 TODAY'S LEADERBOARD</button>
@@ -553,6 +607,15 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
 </div>
 
 </div><!-- #game -->
+
+<!-- GLOSSARY MODAL -->
+<div id="gloss-modal" onclick="closeGlossary()">
+  <div id="gloss-box" onclick="event.stopPropagation()">
+    <div id="gloss-word"></div>
+    <div id="gloss-def"></div>
+    <button class="btn btn-green" id="gloss-close" onclick="closeGlossary()">✕ CLOSE</button>
+  </div>
+</div>
 
 <script>
 // ============================================================
@@ -780,6 +843,107 @@ const PORT_CITY_INFO = {
 };
 
 // ============================================================
+// GLOSSARY
+// ============================================================
+const GLOSSARY = {
+  'monsoon':      'A seasonal wind that reverses direction twice a year. In summer it blows northeast across the Indian Ocean, in winter it reverses. Medieval sailors timed their voyages entirely around these predictable winds.',
+  'dhow':         'A traditional Arab sailing vessel, typically with a triangular lateen sail. Dhows were the primary trading ships of the Indian Ocean for over a thousand years and were often built without nails — planks were sewn together with rope.',
+  'Swahili':      'Both a language and a culture that emerged on the East African coast from the intermarriage of Bantu African and Arab Muslim communities. The Swahili city-states like Kilwa became wealthy middlemen in the Indian Ocean trade network.',
+  'spice':        'In the medieval world, spices like pepper, cinnamon, nutmeg, and cloves were luxury goods worth more than their weight in silver. They were used for food preservation, medicine, and as a display of wealth.',
+  'monsoon winds':'The seasonal winds that made Indian Ocean trade predictable. Blowing northeast in winter and southwest in summer, they allowed sailors to plan voyages with reliability impossible in other oceans.',
+  'caravan':      'A group of merchants traveling together overland for safety, usually with camels. Caravans connected the Indian Ocean trade network to inland cities like Baghdad, Samarkand, and eventually Europe.',
+  'sultan':       'An Islamic ruler or sovereign. Many port cities in this game, including Malacca and the Swahili city-states, were ruled by sultans who collected taxes on trade and offered protection to merchants.',
+  'lapis lazuli': 'A deep-blue gemstone mined only in the mountains of Afghanistan. It was ground into pigment for paintings, used in jewelry, and traded across the entire Indian Ocean world. Medieval artists prized it above all other blue pigments.',
+  'saffron':      'The dried stigmas of the crocus flower, used as a spice, dye, and medicine. One of the most labor-intensive crops in the world — a single pound requires hand-picking 75,000 flowers at dawn before they wilt.',
+  'calico':       'A plain cotton textile produced cheaply and in great quantities on India\'s Malabar Coast. It became so famous in Europe that the fabric was named after its city of origin: Calicut.',
+  'ivory':        'Elephant tusks traded from the African interior through Swahili coast ports like Kilwa. Ivory was carved into luxury objects across Asia and was a major driver of the East African economy.',
+  'porcelain':    'Fine Chinese ceramics fired at extremely high temperatures, producing a hard, white, translucent material unlike anything made elsewhere. Medieval Chinese porcelain was found from East Africa to the Middle East, carried by Indian Ocean merchants.',
+  'Mamluk':       'A military class of enslaved soldiers who seized power in Egypt and Syria. The Mamluk Sultanate (1250–1517) ruled Cairo during this game\'s era and was one of the most powerful states in the Islamic world.',
+  'Silk Road':    'The overland trade routes connecting China and Central Asia to the Middle East and Europe. The Mongol Empire briefly unified these routes in the 1200s–1300s, boosting both overland and Indian Ocean trade simultaneously.',
+  'Ibn Battuta':  'A Moroccan scholar and traveler (1304–1368) who spent 29 years journeying across the Islamic world, visiting nearly every port in this game. His account, the Rihla, is one of the most important historical sources on medieval Indian Ocean trade.'
+};
+
+function openGlossary(term){
+  const def = GLOSSARY[term];
+  if(!def) return;
+  document.getElementById('gloss-word').textContent = term.toUpperCase();
+  document.getElementById('gloss-def').textContent = def;
+  document.getElementById('gloss-modal').classList.add('open');
+}
+function closeGlossary(){
+  document.getElementById('gloss-modal').classList.remove('open');
+}
+function linkGlossaryTerms(text){
+  // Replace known glossary terms with clickable spans (case-insensitive, whole word)
+  let result = text;
+  Object.keys(GLOSSARY).forEach(term=>{
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const re = new RegExp('\\b(' + escaped + ')\\b', 'gi');
+    result = result.replace(re, `<span class="gloss-term" onclick="openGlossary('${term}')">$1</span>`);
+  });
+  return result;
+}
+
+// ============================================================
+// DID YOU KNOW FACTS
+// ============================================================
+const DID_YOU_KNOW = [
+  "Pepper was medieval Europe's most valuable spice — it was so prized that rents, dowries, and even ransoms were sometimes paid in peppercorns. A single sack could be worth a craftsman's annual salary.",
+  "The monsoon winds were the highways of the medieval world — Arab sailors discovered that the Indian Ocean winds reverse direction twice a year like clockwork, making round-trip voyages predictable and reliable as early as the 1st century CE.",
+  "Dhows had no nails — the planks of a traditional Arab dhow were sewn together with coconut fiber rope rather than nailed. Sailors believed this made the ship more flexible and better able to survive rough seas.",
+  "Swahili is a creole language — it formed along the East African coast when Bantu-speaking Africans and Arab Muslim merchants intermarried over centuries, blending their languages and cultures into something entirely new.",
+  "Calicut cloth was so famous that the English word 'calico' comes from it — the cheap, high-quality cotton textiles produced on India's Malabar Coast became so well-known in Europe that the fabric was simply named after the city.",
+  "The Mongol Empire accidentally supercharged Indian Ocean trade — by stabilizing the Silk Road and ruling China, the Mongols created massive demand for luxury goods that made sea routes to the Indian Ocean even more profitable.",
+  "Kilwa was so impressive it stunned Ibn Battuta — when the great Moroccan traveler visited in the 1330s, he called Kilwa Kisiwani one of the most beautiful cities in the world. Its prosperity came entirely from controlling the flow of African gold.",
+  "Nutmeg was only grown on six tiny islands — the Banda Islands in what is now Indonesia were the sole source of nutmeg in the entire world until the 1800s. Europeans were so desperate to control them that it sparked centuries of colonial violence.",
+  "Cairo in 1300 had a population of nearly 500,000 — making it larger than London, Paris, and Rome combined at the time. Its size was powered almost entirely by its position as the middleman between Asian luxury goods and European buyers.",
+  "Arab merchants brought Islam to Southeast Asia through trade, not conquest — the spread of Islam to Malacca, Indonesia, and the Philippines happened peacefully through centuries of intermarriage and commercial relationships between Arab traders and local populations.",
+  "Chinese porcelain was the status symbol of the medieval world — archaeologists have found Ming dynasty porcelain in the ruins of Great Zimbabwe, in East African graves, and across the Middle East, showing how far Chinese goods traveled through this network.",
+  "The word 'magazine' comes from an Arabic trade term — the Arabic word makhāzin, meaning 'storehouses' for goods, gave us the word 'magazine' — a place where things are stored and distributed.",
+  "Hormuz collected taxes on every ship that passed through the strait — the tiny island kingdom had almost no farmland or fresh water, and imported nearly all its food. It survived entirely on tariff revenue from the world's most strategically located chokepoint.",
+  "Gold from Zimbabwe powered the entire Indian Ocean economy — the Kingdom of Greater Zimbabwe produced so much gold that it flooded markets from Kilwa to China, keeping prices low enough that merchants across the network could use gold coins as common currency.",
+  "Medieval Indian Ocean trade was largely self-regulating — unlike European trade of the same era, the Indian Ocean network operated through merchant communities, shared legal codes, and mutual trust between traders of different faiths and ethnicities.",
+  "Ibn Battuta traveled more miles than Marco Polo — the Moroccan scholar crossed the Indian Ocean multiple times in the 1300s, visiting nearly every port in this game. He covered roughly 75,000 miles over 29 years — three times the distance of Marco Polo's famous journey.",
+  "Lapis lazuli from Afghanistan ended up in European paintings — the brilliant blue pigment used by Renaissance artists like Michelangelo came from a single mountain valley in Afghanistan, traded through Hormuz and Cairo before reaching Europe. It was literally worth more than gold by weight.",
+  "The Indian Ocean had no single dominant power for centuries — unlike the Mediterranean, which was controlled by Rome and then Byzantium, the Indian Ocean trade network thrived precisely because no single empire controlled it. Merchants of every religion traded side by side.",
+  "Saffron required more labor than almost any other crop — each crocus flower produces just three tiny stigmas, which must be hand-picked at dawn before the flower wilts. It takes roughly 75,000 flowers to produce a single pound of saffron, which is why it remains the world's most expensive spice by weight today.",
+  "Malacca's rulers deliberately encouraged religious diversity — the Sultanate of Malacca maintained Hindu, Muslim, Chinese, and Indian merchant communities simultaneously, each with their own laws and leaders. This tolerance was a deliberate economic strategy to attract the maximum number of traders.",
+  "A medieval merchant's biggest risk wasn't pirates — it was debt. Most large trading voyages were financed through complex partnerships and loans. A merchant who returned empty-handed could lose his home, his family's savings, and his reputation for life.",
+  "The compass came to the Indian Ocean from China via Arab traders — Chinese sailors invented the magnetic compass around the 11th century. Arab merchants adopted it quickly, and it eventually reached European navigators — helping make the Age of Exploration possible.",
+  "East African city-states built entirely in stone with no mortar — the coral-stone architecture of Kilwa required no binding agent. The stones were cut so precisely that they held together by weight and friction alone, much like the construction of Great Zimbabwe.",
+  "The Black Death may have spread along the Indian Ocean trade routes — historians believe the plague that killed up to half of Europe's population in the 1340s traveled from Central Asia through trade networks, moving along the same routes used by spice merchants before reaching the Mediterranean.",
+  "Vasco da Gama's arrival in Calicut in 1498 shocked local merchants — when the Portuguese arrived, the Arab and Indian merchants who dominated Calicut's trade were stunned. They had never imagined Europeans could navigate directly to the source of spices — and they correctly understood it would change everything."
+];
+let _dykIndex = 0;
+function showDidYouKnow(callback){
+  const fact = DID_YOU_KNOW[_dykIndex % DID_YOU_KNOW.length];
+  _dykIndex++;
+  document.getElementById('dyk-text').textContent = fact;
+  const bar = document.getElementById('dyk-bar');
+  const counter = document.getElementById('dyk-counter');
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+  counter.textContent = '7';
+  showScreen('didyouknow');
+  const ding = document.getElementById('snd-ding');
+  ding.currentTime = 0;
+  ding.play().catch(()=>{});
+  // Tick counter
+  let secs = 7;
+  const tick = setInterval(()=>{
+    secs--;
+    counter.textContent = secs;
+    if(secs <= 0) clearInterval(tick);
+  }, 1000);
+  // Start progress bar
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    bar.style.transition = 'width 7s linear';
+    bar.style.width = '100%';
+  }));
+  setTimeout(()=>{ clearInterval(tick); callback(); }, 7000);
+}
+
+// ============================================================
 // GAME STATE
 // ============================================================
 const DEBT_LIMIT = 200; // player may borrow up to this amount
@@ -803,7 +967,8 @@ let G = {
   repairPaid: false,
   legs: 0, // journey legs taken this life
   firstLeg: true,
-  loanOwed: 0  // amount owed to moneylender on return home (borrowed 200, repay 400)
+  loanOwed: 0,  // amount owed to moneylender on return home (borrowed 200, repay 400)
+  shipLog: []   // running journal of events this voyage
 };
 
 const MONTHS = ['April','October'];
@@ -859,7 +1024,7 @@ let _musicMuted = false;
 function startGame(){
   // Start looping background music on first player interaction
   const music = document.getElementById('snd-music');
-  music.volume = 0.6;
+  music.volume = 0.42;
   music.play().catch(()=>{});
   showScreen('char-select');
 }
@@ -871,6 +1036,30 @@ function toggleMusic(){
   music.muted = _musicMuted;
   btn.textContent = _musicMuted ? '🔇' : '🔊';
   btn.classList.toggle('muted', _musicMuted);
+}
+
+// Ship's Log
+let _logReturnScreen = '';
+function addLog(entry){
+  G.shipLog.push({ date: dateStr(), text: entry });
+}
+function openLog(){
+  const current = document.querySelector('.screen.active');
+  _logReturnScreen = current ? current.id.replace('screen-','') : 'market';
+  const content = document.getElementById('log-content');
+  if(G.shipLog.length === 0){
+    content.innerHTML = '<div style="color:var(--dim);text-align:center;padding:20px;">No entries yet. Set sail to begin your log!</div>';
+  } else {
+    content.innerHTML = G.shipLog.map((e,i)=>`
+      <div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #1a2a3a;">
+        <span style="color:var(--gold);min-width:90px;flex-shrink:0;">${e.date}</span>
+        <span style="color:var(--text);">${e.text}</span>
+      </div>`).join('');
+  }
+  showScreen('log');
+}
+function closeLog(){
+  showScreen(_logReturnScreen || 'market');
 }
 
 function goToTitle(){
@@ -954,7 +1143,7 @@ function buildCharCards(){
   container.innerHTML = CHARACTERS.map((c,i)=>`
     <div class="char-card" id="ccard-${i}" onclick="selectChar(${i})">
       <h3>${c.title}</h3>
-      <div style="color:var(--dim);font-size:8px;margin-bottom:6px;">${c.sub}</div>
+      <div style="color:var(--dim);font-size:14px;margin-bottom:6px;">${c.sub}</div>
       <p>${c.desc}</p>
       <div class="char-home">🏠 Home: ${c.home}</div>
       <div class="char-home">⛵ First voyages: ${c.firstDests.join(', ')}</div>
@@ -1069,12 +1258,14 @@ function openMarket(skipRepairCheck){
       <div>
         <input type="number" class="good-qty" id="qty-${i}" min="0" value="0"
           onchange="updateCart()" oninput="updateCart()">
-        <div style="font-size:8px;color:var(--dim);text-align:center;">${g.unit}s</div>
+        <div style="font-size:13px;color:var(--dim);text-align:center;">${g.unit}s</div>
       </div>
-      <div style="font-size:8px;color:var(--dim);max-width:160px;">
+      <div style="font-size:13px;color:var(--dim);max-width:160px;">
         <div style="color:var(--dim);margin-bottom:3px;">${g.why}</div>
       </div>
-      <div class="good-desc">${g.want}</div>
+      <div class="good-desc" style="background:#07121f;border-left:2px solid var(--gold);padding:4px 8px;border-radius:2px;">
+        <span style="color:var(--gold);font-size:12px;">💡 WHY PORTS WANT THIS: </span>${g.want}
+      </div>
     </div>
   `).join('');
   showScreen('market');
@@ -1128,7 +1319,7 @@ function retireHere(){
   updateHUD();
   const profit = G.dinars - 1000;
   document.getElementById('retire-summary').innerHTML = `
-    <div style="background:#050e1c;border:1px solid var(--border);padding:12px;margin:10px auto;max-width:400px;font-size:9px;line-height:2.2;">
+    <div style="background:#050e1c;border:1px solid var(--border);padding:12px;margin:10px auto;max-width:400px;font-size:16px;line-height:1.7;">
       <div style="margin-bottom:4px;">MERCHANT: <span style="color:var(--gold)">${G.merchantName}</span></div>
       <div style="margin-bottom:4px;">RETIRED IN: <span style="color:var(--gold)">${G.currentPort}</span></div>
       <div style="margin-bottom:4px;">DATE: <span style="color:var(--text)">${dateStr()}</span></div>
@@ -1188,7 +1379,7 @@ function openDestination(){
 
   // Inventory summary
   const invEl = document.getElementById('inv-display-dest');
-  invEl.innerHTML = '<div style="font-size:9px;color:var(--dim);margin-bottom:8px;">YOUR CARGO:</div>' +
+  invEl.innerHTML = '<div style="font-size:15px;color:var(--dim);margin-bottom:8px;">YOUR CARGO:</div>' +
     G.inventory.map(it=>`<div class="inv-row"><span class="inv-name">${it.name}</span><span class="inv-qty">${it.qty} ${it.unit}s</span><span class="inv-val">${(it.qty*it.buyPrice).toLocaleString()} dn</span></div>`).join('');
 
   const routeEl = document.getElementById('route-buttons');
@@ -1213,6 +1404,7 @@ function openDestination(){
 function chooseDestination(dest){
   G.destinationPort = dest;
   G.firstLeg = false;
+  addLog(`Set sail from ${G.currentPort} bound for ${dest}.`);
   openJourney();
 }
 
@@ -1230,23 +1422,24 @@ function openJourney(){
 function rollJourney(){
   const btn = document.getElementById('btn-roll-journey');
   btn.disabled = true;
+
+  const roll = Math.floor(Math.random()*10)+1;
+  const ev = JOURNEY_EVENTS[roll-1];
+
   btn.innerHTML = '<span class="dice-spinning">🎲</span> <span class="suspense-dots">Rolling...</span>';
 
   const dice = document.getElementById('snd-dice');
   dice.currentTime = 0;
-  const dicePromise = dice.play().catch(()=>{});
+  dice.play().catch(()=>{});
 
   const snd = document.getElementById('snd-ocean');
   snd.currentTime = 0;
   snd.play().catch(()=>{});
 
-  const roll = Math.floor(Math.random()*10)+1;
-  const ev = JOURNEY_EVENTS[roll-1];
-
   function showVoyageThenResult(){
-    btn.innerHTML = '🎲 ROLL THE DIE';
-    // Show the voyage map screen with ship sailing, then reveal result
-    openVoyageScreen(G.currentPort, G.destinationPort, ()=>{
+      btn.innerHTML = '🎲 ROLL THE DIE';
+      // Show the voyage map screen with ship sailing, then reveal result
+      openVoyageScreen(G.currentPort, G.destinationPort, ()=>{
       applyJourneyEffect(ev);
       const resultDiv = document.getElementById('journey-result');
       const box = document.getElementById('journey-event-box');
@@ -1254,7 +1447,7 @@ function rollJourney(){
       box.style.opacity = '0';
       document.getElementById('journey-roll-num').textContent = '🎲 ' + roll;
       document.getElementById('journey-event-title').textContent = ev.title;
-      document.getElementById('journey-event-desc').textContent = ev.desc;
+      document.getElementById('journey-event-desc').innerHTML = linkGlossaryTerms(ev.desc);
       const quoteEl = document.getElementById('journey-event-quote');
       if(ev.quote){
         quoteEl.style.display = 'block';
@@ -1278,7 +1471,7 @@ function rollJourney(){
         let extra = '';
         if(ev.effect === 'crew_death' && G._lastDeadCrew){
           extra = `<div class="crew-death-box">⚰ <strong>${G._lastDeadCrew}</strong> was lost at sea.<br>
-            <span style="color:var(--dim);font-size:8px;">Remaining crew: ${G.crewAlive.length > 0 ? G.crewAlive.join(', ') : 'None'}</span></div>`;
+            <span style="color:var(--dim);font-size:14px;">Remaining crew: ${G.crewAlive.length > 0 ? G.crewAlive.join(', ') : 'None'}</span></div>`;
           G._lastDeadCrew = null;
         }
         invEl.innerHTML = extra + renderInventorySummary();
@@ -1306,23 +1499,33 @@ function applyJourneyEffect(ev){
   if(ev.effect === 'lose_half'){
     G.inventory.forEach(it=>{ it.qty = Math.floor(it.qty/2); });
     G.inventory = G.inventory.filter(it=>it.qty>0);
+    addLog(`${ev.title} — Lost half of cargo.`);
   } else if(ev.effect === 'lose_all'){
     G.inventory = [];
+    addLog(`${ev.title} — All cargo seized!`);
   } else if(ev.effect === 'lose_quarter_goods'){
     G.inventory.forEach(it=>{ it.qty = Math.ceil(it.qty*3/4); });
+    addLog(`${ev.title} — Lost a quarter of goods.`);
   } else if(ev.effect === 'crew_death'){
     if(G.crewAlive.length > 0){
       const idx = Math.floor(Math.random() * G.crewAlive.length);
       G._lastDeadCrew = G.crewAlive[idx];
       G.crewAlive.splice(idx, 1);
+      addLog(`${ev.title} — ${G._lastDeadCrew} was lost.`);
     }
   } else if(ev.effect === 'bonus_dinars'){
     G.dinars += 200;
     updateHUD();
+    addLog(`${ev.title} — Earned a bonus of 200 dinars.`);
   } else if(ev.effect === 'double_sell'){
     G.sellMultiplier = 2; // set before arriving at port
+    addLog(`${ev.title} — Goods will sell for double price!`);
+  } else if(ev.effect === 'none'){
+    addLog(`${ev.title} — Safe passage across the sea.`);
+  } else if(ev.effect === 'die'){
+    addLog(`${ev.title} — Fate was not kind.`);
   }
-  // 'die' handled separately; 'none' does nothing
+  // 'die' handled separately
 }
 
 function afterJourney(){
@@ -1330,7 +1533,8 @@ function afterJourney(){
   G.legs++;
   advanceDate();
   updateHUD();
-  openPortWelcome();
+  addLog(`Arrived at ${G.currentPort} — ${dateStr()}.`);
+  showDidYouKnow(()=> openPortWelcome());
 }
 
 function openPortWelcome(){
@@ -1350,9 +1554,12 @@ function openPortWelcome(){
 
   // Build paragraphs with fade-in class
   const textEl = document.getElementById('port-welcome-text');
-  const paragraphs = info ? info.text.split('\n\n') : [];
-  textEl.innerHTML = paragraphs.map(p =>
-    `<div class="para-fade">${p}</div>`
+  const rawParagraphs = info ? info.text.split('\n\n') : [];
+  // Ambient intro sentence shown in gold italics before the city description
+  const ambientLine = `After months at sea, your ship sights the shores of ${port}. The smell of land — spices, smoke, and salt — fills the air.`;
+  const paragraphs = [ambientLine, ...rawParagraphs];
+  textEl.innerHTML = paragraphs.map((p, i) =>
+    `<div class="para-fade"${i===0?' style="color:var(--gold);font-style:italic;margin-bottom:10px;"':''}>${p}</div>`
   ).join('');
 
   showScreen('port-welcome');
@@ -1394,14 +1601,15 @@ function openPortEvent(){
 function rollPort(){
   const btn = document.getElementById('btn-roll-port');
   btn.disabled = true;
+
+  const roll = Math.floor(Math.random()*10)+1;
+  const ev = PORT_EVENTS[roll-1];
+
   btn.innerHTML = '<span class="dice-spinning">🎲</span> <span class="suspense-dots">Rolling...</span>';
 
   const dice = document.getElementById('snd-dice');
   dice.currentTime = 0;
   dice.play().catch(()=>{});
-
-  const roll = Math.floor(Math.random()*10)+1;
-  const ev = PORT_EVENTS[roll-1];
 
   function revealPortResult(){
     btn.innerHTML = '🎲 ROLL THE DIE';
@@ -1411,7 +1619,7 @@ function rollPort(){
     box.style.opacity = '0';
     document.getElementById('port-roll-num').textContent = '🎲 ' + roll;
     document.getElementById('port-event-title').textContent = ev.title;
-    document.getElementById('port-event-desc').textContent = ev.desc;
+    document.getElementById('port-event-desc').innerHTML = linkGlossaryTerms(ev.desc);
     const invEl = document.getElementById('port-inv-after');
     invEl.innerHTML = renderInventorySummary();
     document.getElementById('port-result').style.display = 'block';
@@ -1434,17 +1642,24 @@ function applyPortEffect(ev){
     G.inventory.forEach(it=>{ it.qty = Math.floor(it.qty/2); });
     G.inventory = G.inventory.filter(it=>it.qty>0);
     if(!G.bannedPorts.includes(G.currentPort)) G.bannedPorts.push(G.currentPort);
+    addLog(`${ev.title} — Lost half cargo; banned from ${G.currentPort}!`);
   } else if(ev.effect === 'lose_quarter_both'){
     G.inventory.forEach(it=>{ it.qty = Math.ceil(it.qty*3/4); });
     G.dinars = Math.floor(G.dinars*3/4);
     updateHUD();
+    addLog(`${ev.title} — Lost a quarter of goods and dinars.`);
   } else if(ev.effect === 'double_sell'){
     G.sellMultiplier = 2;
+    addLog(`${ev.title} — Goods sold for double price!`);
   } else if(ev.effect === 'sell_150'){
     G.sellMultiplier = 1.5;
+    addLog(`${ev.title} — Goods sold for 1.5× the normal price.`);
   } else if(ev.effect === 'repair_200'){
     G.pendingRepair = true;
     G.repairPaid = false;
+    addLog(`${ev.title} — Ship requires 200 dinar repair.`);
+  } else {
+    addLog(`${ev.title} — Smooth landing at ${G.currentPort}.`);
   }
 }
 
@@ -1513,7 +1728,7 @@ function buildSellScreen(isHome){
       <tr><th>GOOD</th><th>QTY</th><th>PRICE</th><th>EARNINGS</th></tr>
       ${rows}
     </table>
-    <div style="background:#050e1c;border:1px solid var(--border);padding:12px;margin-top:10px;font-size:9px;">
+    <div style="background:#050e1c;border:1px solid var(--border);padding:12px;margin-top:10px;font-size:16px;">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
         <span style="color:var(--dim)">GOODS SOLD FOR:</span>
         <span style="color:var(--green)">${totalSale.toLocaleString()} dinars</span>
@@ -1527,13 +1742,13 @@ function buildSellScreen(isHome){
         <span style="color:var(--red)">💸 LOAN REPAYMENT:</span>
         <span style="color:var(--red)">−${loanRepayment.toLocaleString()} dinars</span>
       </div>` : ''}
-      <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:8px;font-size:11px;">
+      <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:8px;font-size:17px;">
         <span style="color:var(--gold)">NEW TOTAL:</span>
-        <span style="color:var(--gold);font-size:13px;">${newTotal.toLocaleString()} DINARS</span>
+        <span style="color:var(--gold);font-size:19px;">${newTotal.toLocaleString()} DINARS</span>
       </div>
-      ${isHome?`<div style="color:var(--green);margin-top:8px;text-align:center;font-size:10px;">🏠 YOU MADE IT HOME!</div>`:''}
+      ${isHome?`<div style="color:var(--green);margin-top:8px;text-align:center;font-size:17px;">🏠 YOU MADE IT HOME!</div>`:''}
     </div>
-    ${isHome ? '' : `<div style="font-size:8px;color:var(--dim);margin-top:8px;">After selling, you may buy new goods and continue your journey.</div>`}
+    ${isHome ? '' : `<div style="font-size:14px;color:var(--dim);margin-top:8px;">After selling, you may buy new goods and continue your journey.</div>`}
   `;
 
   // Store pending sale total so completeSale can use it
@@ -1543,7 +1758,9 @@ function buildSellScreen(isHome){
 }
 
 function completeSale(){
-  G.dinars += G._pendingSaleTotal;
+  const saleTotal = G._pendingSaleTotal;
+  if(saleTotal > 0) addLog(`Sold goods at ${G.currentPort} for ${saleTotal.toLocaleString()} dinars.`);
+  G.dinars += saleTotal;
   G.inventory = G._keptItems || [];
   G.sellMultiplier = 1;
   G._pendingSaleTotal = 0;
@@ -1570,17 +1787,17 @@ function completeSale(){
 function buildHomeScreen(){
   const profit = G.dinars - 1000;
   document.getElementById('home-summary').innerHTML = `
-    <div style="font-size:9px;line-height:2.2;margin:16px 0;">
+    <div style="font-size:17px;line-height:1.7;margin:16px 0;">
       <div style="color:var(--dim);margin-bottom:4px;">MERCHANT</div>
-      <div style="color:var(--gold);font-size:12px;margin-bottom:12px;">${G.merchantName}</div>
+      <div style="color:var(--gold);font-size:20px;margin-bottom:12px;">${G.merchantName}</div>
       <div style="margin-bottom:6px;">TOTAL DINARS: <span style="color:var(--green)">${G.dinars.toLocaleString()}</span></div>
       <div style="margin-bottom:6px;">STARTED WITH: <span style="color:var(--text)">1,000</span></div>
       <div style="margin-bottom:6px;">NET PROFIT: <span style="color:${profit>=0?'var(--green)':'var(--red)'}">${profit.toLocaleString()}</span></div>
       <div style="margin-bottom:6px;">DEATHS THIS RUN: <span style="color:var(--red)">${G.deaths}</span></div>
       <div style="margin-bottom:6px;">DATE RETURNED: <span style="color:var(--text)">${dateStr()}</span></div>
     </div>
-    <div style="font-size:9px;color:var(--dim);">CREW WHO SURVIVED:</div>
-    <div style="font-size:9px;color:var(--gold);margin-top:4px;">${G.crewNames.join(' · ')}</div>
+    <div style="font-size:15px;color:var(--dim);">CREW WHO SURVIVED:</div>
+    <div style="font-size:16px;color:var(--gold);margin-top:4px;">${G.crewNames.join(' · ')}</div>
   `;
 }
 
@@ -1608,10 +1825,12 @@ function restartLife(){
   G.legs = 0;
   G.firstLeg = true;
   G.loanOwed = 0;
+  G.shipLog = [];
   G.currentPort = G.homePort;
   G.date = {year:1301, monthIndex:0};
   G.crewAlive = [...G.crewNames]; // revive crew on restart
   updateHUD();
+  addLog('Set sail from ' + G.homePort + ' on a new voyage.');
   openMarket();
 }
 
@@ -1620,10 +1839,10 @@ function restartLife(){
 // ============================================================
 function renderInventorySummary(){
   if(!G.inventory || G.inventory.length === 0){
-    return '<div style="color:var(--red);font-size:9px;margin-top:8px;">⚠ Your cargo hold is empty.</div>';
+    return '<div style="color:var(--red);font-size:15px;margin-top:8px;">⚠ Your cargo hold is empty.</div>';
   }
   return '<div style="margin-top:10px;">'+
-    '<div style="font-size:8px;color:var(--dim);margin-bottom:4px;">REMAINING CARGO:</div>'+
+    '<div style="font-size:14px;color:var(--dim);margin-bottom:4px;">REMAINING CARGO:</div>'+
     G.inventory.map(it=>`<div class="inv-row"><span class="inv-name">${it.name}</span><span class="inv-qty">${it.qty} ${it.unit}s</span></div>`).join('')+
   '</div>';
 }
@@ -1683,10 +1902,10 @@ function showLeaderboard(){
       <tr>
         <td class="lb-rank">${medals[i] || (i+1)+'.'}</td>
         <td style="color:var(--gold)">${e.name}</td>
-        <td style="font-size:8px;color:var(--dim)">${e.char}</td>
+        <td style="font-size:13px;color:var(--dim)">${e.char}</td>
         <td style="color:var(--green)">${e.dinars.toLocaleString()} dn</td>
         <td style="color:var(--red)">${e.deaths}☠</td>
-        <td style="color:var(--dim);font-size:8px;">${e.gameDate}</td>
+        <td style="color:var(--dim);font-size:13px;">${e.gameDate}</td>
       </tr>`).join('');
     content = `<table class="lb-table">
       <tr>
