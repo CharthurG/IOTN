@@ -279,6 +279,10 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
     <span class="hud-label">BEST HAUL</span>
     <span class="hud-val" style="color:var(--green)" id="hud-best">0</span>
   </div>
+  <div class="hud-item">
+    <span class="hud-label">PROFIT</span>
+    <span class="hud-val" id="hud-profit">0</span>
+  </div>
   <div class="hud-item" style="align-self:center;margin-left:auto;">
     <button class="btn btn-red" onclick="confirmMainMenu()" style="font-size:8px;padding:6px 10px;margin:0;">⌂ MAIN MENU</button>
     <button class="btn" onclick="openLog()" style="font-size:8px;padding:6px 10px;margin:0;" title="Ship's Log">📜 LOG</button>
@@ -392,6 +396,17 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
         <img id="city-info-img" src="" alt="" style="max-width:100%;max-height:180px;border:2px solid var(--border);border-radius:4px;">
       </div>
       <div id="city-info-text" class="prose" style="font-size:16px;color:var(--text);line-height:1.55;white-space:pre-line;border:1px solid var(--border);padding:10px;background:#050e1c;border-radius:4px;"></div>
+    </div>
+    <div id="market-first-hint" style="display:none;border:2px solid var(--gold);background:#0d1a00;padding:14px 16px;margin-bottom:14px;border-radius:4px;">
+      <div style="color:var(--gold);font-family:var(--font-pixel);font-size:9px;margin-bottom:10px;">🧭 HOW THE MARKET WORKS</div>
+      <div style="font-size:16px;color:var(--text);line-height:1.6;">
+        Buy up to <strong style="color:var(--gold)">3 different types of goods</strong> here, then sail to another port to sell them for profit.
+        Each port only wants certain goods — check the <em>💡 Why ports want this</em> notes before you buy.
+        The further you travel, the greater the reward — and the risk.
+      </div>
+      <div style="text-align:right;margin-top:12px;">
+        <button class="btn btn-green" onclick="dismissMarketHint()" style="font-size:8px;padding:6px 12px;">GOT IT ✓</button>
+      </div>
     </div>
     <div id="repair-notice" style="display:none;" class="notice" style="border-color:var(--yellow);"></div>
     <div id="loan-offer" style="display:none;border:2px solid var(--red);background:#1a0505;padding:12px;margin-bottom:12px;text-align:center;">
@@ -699,6 +714,20 @@ const SELL_PRICES = {
   'Malacca': {'Cotton Textiles':{p:10,u:'bolt'},'Gold':{p:350,u:'crate'},'Ivory':{p:200,u:'tusk'},'Porcelain':{p:100,u:'crate'},'Silk':{p:40,u:'bolt'},'Precious Stones':{p:650,u:'crate'},'Tea':{p:125,u:'crate'},'Iron':{p:75,u:'bar'},'Saffron':{p:200,u:'crate'}}
 };
 
+// CREW DEATH REASONS — used for both event-driven and secondary crew losses
+const CREW_DEATH_REASONS = [
+  'swept overboard by a rogue wave in the night',
+  'struck by falling rigging in a sudden squall',
+  'died of fever after several days of illness',
+  'fell from the mast while adjusting the sails',
+  'drowned when the ship lurched in rough water',
+  'taken ill with a sickness that spread below decks',
+  'died quietly in the night — cause unknown',
+  'lost during a storm when visibility dropped to nothing',
+  'overcome by heat exhaustion on the open sea',
+  'carried off by a gust of wind during a night watch',
+];
+
 // OCEAN JOURNEY EVENTS (Ten-sided die — roll 1–10)
 // Bad outcomes (die or lose goods): rolls 1–4 = 4/10 = 40% (was 4/6 = 67% on d6)
 const JOURNEY_EVENTS = [
@@ -968,7 +997,8 @@ let G = {
   legs: 0, // journey legs taken this life
   firstLeg: true,
   loanOwed: 0,  // amount owed to moneylender on return home (borrowed 200, repay 400)
-  shipLog: []   // running journal of events this voyage
+  shipLog: [],  // running journal of events this voyage
+  shownMarketHint: false  // whether the first-market hint has been dismissed
 };
 
 const MONTHS = ['April','October'];
@@ -1016,6 +1046,10 @@ function updateHUD(){
   document.getElementById('hud-date').textContent = dateStr();
   document.getElementById('hud-deaths').textContent = G.deaths;
   document.getElementById('hud-best').textContent = G.bestDinars.toLocaleString();
+  const profit = G.dinars - 1000;
+  const profEl = document.getElementById('hud-profit');
+  profEl.textContent = (profit >= 0 ? '+' : '') + profit.toLocaleString();
+  profEl.style.color = profit >= 0 ? 'var(--green)' : 'var(--red)';
   moveShip(G.currentPort);
 }
 
@@ -1193,6 +1227,7 @@ function confirmNames(){
   G.bannedPorts = [];
   G.sellMultiplier = 1;
   G.pendingRepair = false;
+  G.shownMarketHint = false;
   G.legs = 0;
   G.firstLeg = true;
   updateHUD();
@@ -1209,6 +1244,10 @@ function openMarket(skipRepairCheck){
   document.getElementById('market-title').textContent = '🛒 MARKET: ' + port.toUpperCase();
   document.getElementById('market-subtitle').textContent =
     G.char.title + ' | ' + G.dinars.toLocaleString() + ' dinars available';
+
+  // First-market hint
+  const hintDiv = document.getElementById('market-first-hint');
+  hintDiv.style.display = (!G.shownMarketHint) ? 'block' : 'none';
 
   // Repair notice
   const repairDiv = document.getElementById('repair-notice');
@@ -1311,6 +1350,11 @@ function takeLoan(){
   document.getElementById('loan-active-notice').style.display = 'block';
   document.getElementById('market-dinars').textContent = G.dinars.toLocaleString() + ' dinars';
   updateHUD();
+}
+
+function dismissMarketHint(){
+  G.shownMarketHint = true;
+  document.getElementById('market-first-hint').style.display = 'none';
 }
 
 function retireHere(){
@@ -1470,10 +1514,12 @@ function rollJourney(){
       } else {
         document.getElementById('btn-after-journey').style.display = 'inline-block';
         let extra = '';
-        if(ev.effect === 'crew_death' && G._lastDeadCrew){
-          extra = `<div class="crew-death-box">⚰ <strong>${G._lastDeadCrew}</strong> was lost at sea.<br>
+        if(G._lastDeadCrew){
+          extra = `<div class="crew-death-box">⚰ <strong>${G._lastDeadCrew}</strong> was lost —
+            <em style="font-size:15px;">${G._lastDeadReason || 'lost at sea'}.</em><br>
             <span style="color:var(--dim);font-size:14px;">Remaining crew: ${G.crewAlive.length > 0 ? G.crewAlive.join(', ') : 'None'}</span></div>`;
           G._lastDeadCrew = null;
+          G._lastDeadReason = null;
         }
         invEl.innerHTML = extra + renderInventorySummary();
         showScreen('journey');
@@ -1511,8 +1557,9 @@ function applyJourneyEffect(ev){
     if(G.crewAlive.length > 0){
       const idx = Math.floor(Math.random() * G.crewAlive.length);
       G._lastDeadCrew = G.crewAlive[idx];
+      G._lastDeadReason = CREW_DEATH_REASONS[Math.floor(Math.random()*CREW_DEATH_REASONS.length)];
       G.crewAlive.splice(idx, 1);
-      addLog(`${ev.title} — ${G._lastDeadCrew} was lost.`);
+      addLog(`${ev.title} — ${G._lastDeadCrew} was lost (${G._lastDeadReason}).`);
     }
   } else if(ev.effect === 'bonus_dinars'){
     G.dinars += 200;
@@ -1527,6 +1574,16 @@ function applyJourneyEffect(ev){
     addLog(`${ev.title} — Fate was not kind.`);
   }
   // 'die' handled separately
+
+  // Independent 40% crew-death check on any voyage where the main event
+  // didn't already kill a crew member or the player
+  if(ev.effect !== 'crew_death' && ev.effect !== 'die' && G.crewAlive.length > 0 && Math.random() < 0.4){
+    const idx = Math.floor(Math.random() * G.crewAlive.length);
+    G._lastDeadCrew = G.crewAlive[idx];
+    G._lastDeadReason = CREW_DEATH_REASONS[Math.floor(Math.random()*CREW_DEATH_REASONS.length)];
+    G.crewAlive.splice(idx, 1);
+    addLog(`${G._lastDeadCrew} was lost at sea — ${G._lastDeadReason}.`);
+  }
 }
 
 function afterJourney(){
@@ -1789,6 +1846,23 @@ function completeSale(){
 
 function buildHomeScreen(){
   const profit = G.dinars - 1000;
+
+  // Contextual historical note based on outcome
+  let histNote, histColor;
+  if(profit >= 3000){
+    histNote = `A profit of this size made real merchants among the most powerful people in the medieval world. Wealthy Indian Ocean traders like Ibrahim al-Sahili funded the construction of mosques and madrasas, endowed libraries, and financed the voyages of future merchants — sometimes sending dozens of ships in a single season.`;
+    histColor = 'var(--gold)';
+  } else if(profit >= 1000){
+    histNote = `A solid profit like yours was enough for a real 14th-century merchant to invest in a second ship, hire more crew, and expand their trading network. Many used their earnings to build caravanserais — roadside inns that sheltered traveling merchants — as an act of both charity and commerce.`;
+    histColor = 'var(--green)';
+  } else if(profit >= 0){
+    histNote = `Even a modest return was meaningful. Real merchants who broke even often reinvested in better goods the next voyage, slowly building the trade connections that defined the Indian Ocean world. Reputation and trust — not just profit — were the true currency of medieval commerce.`;
+    histColor = 'var(--text)';
+  } else {
+    histNote = `Not every voyage succeeded — and real merchants knew it. Many of history's greatest traders suffered ruinous losses before finding their footing. The medieval scholar Ibn Battuta wrote of merchants who lost everything to storms or pirates, yet returned to sea because the Indian Ocean offered opportunities found nowhere else on earth.`;
+    histColor = 'var(--dim)';
+  }
+
   document.getElementById('home-summary').innerHTML = `
     <div style="font-size:17px;line-height:1.7;margin:16px 0;">
       <div style="color:var(--dim);margin-bottom:4px;">MERCHANT</div>
@@ -1801,6 +1875,9 @@ function buildHomeScreen(){
     </div>
     <div style="font-size:15px;color:var(--dim);">CREW WHO SURVIVED:</div>
     <div style="font-size:16px;color:var(--gold);margin-top:4px;">${G.crewNames.join(' · ')}</div>
+    <div class="prose" style="margin-top:22px;padding:16px;border-top:2px solid var(--border);font-size:16px;line-height:1.65;color:${histColor};font-style:italic;">
+      📜 ${histNote}
+    </div>
   `;
 }
 
