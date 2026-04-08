@@ -249,6 +249,32 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
   padding:10px;margin:8px 0;font-size:15px;
   color:var(--red);text-align:center;
 }
+/* ── REFLECTION SCREEN ── */
+.ref-q-card{background:var(--panel);border:2px solid var(--border);border-radius:4px;padding:18px 20px;margin-bottom:16px;}
+.ref-q-num{font-family:var(--font-pixel);font-size:8px;color:var(--gold);display:block;margin-bottom:8px;}
+.ref-q-text{font-size:17px;color:var(--text);line-height:1.6;margin-bottom:10px;}
+.ref-q-hint{font-size:14px;color:var(--dim);font-style:italic;margin-bottom:12px;padding-left:12px;border-left:2px solid var(--border);line-height:1.55;}
+.ref-textarea{width:100%;min-height:96px;background:var(--deep);border:2px solid var(--border);border-radius:3px;color:var(--text);font-family:var(--font-body);font-size:16px;line-height:1.6;padding:10px 12px;resize:vertical;outline:none;transition:border-color 0.2s;}
+.ref-textarea:focus{border-color:var(--gold);}
+.ref-textarea::placeholder{color:var(--border);font-style:italic;}
+#screen-reflection input[type=text]{background:var(--deep);border:2px solid var(--border);border-radius:3px;color:var(--text);font-family:var(--font-pixel);font-size:9px;padding:9px 11px;width:100%;outline:none;transition:border-color 0.2s;}
+#screen-reflection input[type=text]:focus{border-color:var(--gold);}
+@media print{
+  body{background:#fff;color:#111;}
+  #hud, #gloss-modal, .screen:not(#screen-reflection){display:none!important;}
+  #screen-reflection{display:block!important;}
+  #screen-reflection .panel{max-width:100%;background:#fff;border:none;box-shadow:none;padding:0;}
+  .ref-q-card{background:#fafafa;border-color:#bbb;page-break-inside:avoid;}
+  .ref-q-num{color:#8b6400;}
+  .ref-q-text{color:#111;}
+  .ref-q-hint{color:#555;border-color:#bbb;}
+  .ref-textarea{background:#fff;border-color:#aaa;color:#111;min-height:80px;}
+  #screen-reflection input[type=text]{background:#fff;border-color:#aaa;color:#111;font-size:11pt;}
+  #screen-reflection .btn-row button.btn-big:not(:first-of-type){display:none;}
+  #screen-reflection .btn-row > div{display:block!important;}
+  #screen-reflection .panel-title{color:#1a3a60;}
+  #screen-reflection .panel-subtitle{color:#555;}
+}
 </style>
 </head>
 <body>
@@ -352,6 +378,7 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
     <div id="log-content" style="font-size:16px;line-height:1.6;max-height:420px;overflow-y:auto;padding:4px 0;"></div>
     <div class="btn-row" style="margin-top:14px;">
       <button class="btn btn-green" onclick="closeLog()">◀ BACK</button>
+      <button class="btn" style="background:var(--dkgold);color:var(--deep);font-size:8px;" onclick="showReflection('log')">📝 FINAL REFLECTION</button>
     </div>
   </div>
 </div>
@@ -455,6 +482,9 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
       <button class="btn btn-big btn-green" onclick="restartLife()">▶ SAIL AGAIN</button>
       <button class="btn btn-big" onclick="showLeaderboard()">🏆 LEADERBOARD</button>
       <button class="btn btn-big" onclick="goToTitle()">⌂ MAIN MENU</button>
+    </div>
+    <div style="margin-top:12px;">
+      <button class="btn" style="background:var(--dkgold);color:var(--deep);font-size:8px;" onclick="showReflection('retire')">📝 FINAL REFLECTION</button>
     </div>
   </div>
 </div>
@@ -601,6 +631,9 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
     <button class="btn btn-big btn-red" onclick="restartLife()">▶ RETURN TO YOUR HOME PORT</button>
     <button class="btn btn-big" onclick="showLeaderboard()" style="margin-top:6px;">🏆 TODAY'S LEADERBOARD</button>
     <button class="btn btn-big" onclick="goToTitle()" style="margin-top:6px;">⌂ MAIN MENU</button>
+    <div style="margin-top:12px;">
+      <button class="btn" style="background:var(--dkgold);color:var(--deep);font-size:8px;" onclick="showReflection('death')">📝 FINAL REFLECTION</button>
+    </div>
   </div>
 </div>
 
@@ -618,6 +651,125 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
       <button class="btn btn-big" onclick="showLeaderboard()">🏆 LEADERBOARD</button>
       <button class="btn btn-big" onclick="goToTitle()">⌂ MAIN MENU</button>
     </div>
+    <div style="margin-top:12px;">
+      <button class="btn" style="background:var(--dkgold);color:var(--deep);font-size:8px;" onclick="showReflection('home')">📝 FINAL REFLECTION</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FINAL REFLECTION ===== -->
+<div id="screen-reflection" class="screen">
+  <div class="panel" style="max-width:760px;margin:0 auto;text-align:left;">
+
+    <div class="panel-title" style="text-align:center;">📝 FINAL REFLECTION</div>
+    <div class="panel-subtitle" style="text-align:center;margin-bottom:20px;">Answer each question in complete sentences using evidence from your voyage.</div>
+
+    <!-- Student info -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;">
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label>YOUR NAME</label>
+        <input type="text" id="ref-name" placeholder="First and Last Name">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label>DATE</label>
+        <input type="text" id="ref-date" placeholder="e.g. April 7, 2026">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label>STUDENTS YOU WORKED WITH</label>
+        <input type="text" id="ref-group" placeholder="Names of classmates in your group">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label>HOME PORT → DESTINATION PORT</label>
+        <input type="text" id="ref-route" placeholder="e.g. Kilwa → Calicut">
+      </div>
+    </div>
+
+    <!-- Rubric reminder -->
+    <div style="background:#0a1a0a;border:2px solid #1e4a1e;border-radius:4px;padding:16px 18px;margin-bottom:22px;">
+      <div style="font-family:var(--font-pixel);font-size:8px;color:#3cd060;letter-spacing:2px;border-bottom:1px solid #1e4a1e;padding-bottom:8px;margin-bottom:12px;">HOW YOUR ANSWERS WILL BE SCORED</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;font-size:15px;line-height:1.55;">
+        <div><strong style="display:block;font-family:var(--font-pixel);font-size:7px;color:#3cd060;margin-bottom:6px;letter-spacing:1px;">ACCURACY</strong>Are your facts correct? Do they reflect what actually happened in the game and in history?</div>
+        <div><strong style="display:block;font-family:var(--font-pixel);font-size:7px;color:#3cd060;margin-bottom:6px;letter-spacing:1px;">CAUSATION</strong>Do you explain <em>why</em> things happened, not just <em>what</em> happened?</div>
+        <div><strong style="display:block;font-family:var(--font-pixel);font-size:7px;color:#3cd060;margin-bottom:6px;letter-spacing:1px;">SPECIFICITY</strong>Do you use specific names, goods, ports, or examples?</div>
+      </div>
+    </div>
+
+    <!-- Questions -->
+    <div style="font-family:var(--font-pixel);font-size:8px;color:var(--dkgold);letter-spacing:2px;border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:18px;">YOUR VOYAGE — REFLECTION QUESTIONS</div>
+
+    <div class="ref-q-card">
+      <span class="ref-q-num">QUESTION 1 OF 10</span>
+      <p class="ref-q-text">Which character did you start with? Describe where they are from and a few facts about the society they lived in — including major religious beliefs and the political system.</p>
+      <textarea class="ref-textarea" placeholder="Name your character, their home port, and describe their society…"></textarea>
+    </div>
+
+    <div class="ref-q-card">
+      <span class="ref-q-num">QUESTION 2 OF 10</span>
+      <p class="ref-q-text">Which trade goods did you buy in your home port? Describe why at least one of these items was cheapest at your starting port.</p>
+      <p class="ref-q-hint">Think about: climate, skilled labor, low wages, geographic proximity to other cultures, or access to raw materials.</p>
+      <textarea class="ref-textarea" placeholder="Name the goods you bought and explain why one was produced cheaply at home…"></textarea>
+    </div>
+
+    <div class="ref-q-card">
+      <span class="ref-q-num">QUESTION 3 OF 10</span>
+      <p class="ref-q-text">What dangers did you face on your ocean voyages? Choose one danger and explain what it reveals about the limits of medieval maritime technology or governance.</p>
+      <textarea class="ref-textarea" placeholder="Describe a danger you faced and connect it to the technology or political realities of the era…"></textarea>
+    </div>
+
+    <div class="ref-q-card">
+      <span class="ref-q-num">QUESTION 4 OF 10</span>
+      <p class="ref-q-text">What problems did you face when trying to trade in a foreign port? Why did this problem exist — what made foreign trade structurally more difficult than trading at home?</p>
+      <textarea class="ref-textarea" placeholder="Describe the problem and explain the deeper reason it existed for foreign merchants…"></textarea>
+    </div>
+
+    <div class="ref-q-card">
+      <span class="ref-q-num">QUESTION 5 OF 10</span>
+      <p class="ref-q-text">What technologies or adaptations do you think could have made the journey or trading in a foreign country less dangerous and more reliable?</p>
+      <p class="ref-q-hint">Possible ideas: magnetic compass, astrolabe, reliable maps, knowledge of monsoon wind routes, local contacts, knowledge of the local language, or information from other merchants about prices.</p>
+      <textarea class="ref-textarea" placeholder="Describe one or more technologies or adaptations and explain how they would have helped…"></textarea>
+    </div>
+
+    <div class="ref-q-card">
+      <span class="ref-q-num">QUESTION 6 OF 10</span>
+      <p class="ref-q-text">Which trade goods did you buy in the foreign port? Describe why at least one of these items was cheapest in that port.</p>
+      <p class="ref-q-hint">Think about: climate, skilled labor, geographic proximity to other cultures, or access to raw materials.</p>
+      <textarea class="ref-textarea" placeholder="Name the foreign goods and explain why one was produced cheaply there…"></textarea>
+    </div>
+
+    <div class="ref-q-card">
+      <span class="ref-q-num">QUESTION 7 OF 10</span>
+      <p class="ref-q-text">Why would it take roughly a year to travel from one port to another and back again?</p>
+      <textarea class="ref-textarea" placeholder="Explain the role of wind, weather, season, and sailing technology in determining travel time…"></textarea>
+    </div>
+
+    <div class="ref-q-card">
+      <span class="ref-q-num">QUESTION 8 OF 10</span>
+      <p class="ref-q-text">Why do consumers want these goods? How would their lives benefit from attaining these high-priced items?</p>
+      <p class="ref-q-hint">A "dinar" is worth roughly a day's wages for a laborer in the Middle Ages. Think about: luxury status, medicine, spices, textiles, and the social meaning of rare goods.</p>
+      <textarea class="ref-textarea" placeholder="Explain what motivated buyers to pay high prices for these trade goods…"></textarea>
+    </div>
+
+    <div class="ref-q-card">
+      <span class="ref-q-num">QUESTION 9 OF 10</span>
+      <p class="ref-q-text">Why do you think no empire attempted to take control over these trade routes in the way that land-based empires took control over land routes like the Silk Road?</p>
+      <textarea class="ref-textarea" placeholder="Think about what makes ocean routes structurally different from land routes when it comes to military control…"></textarea>
+    </div>
+
+    <div class="ref-q-card">
+      <span class="ref-q-num">QUESTION 10 OF 10</span>
+      <p class="ref-q-text">Which universal religions spread along these routes? Explain one specific way a religion might spread through merchant contact rather than military conquest.</p>
+      <textarea class="ref-textarea" placeholder="Name a religion and describe a specific mechanism by which it spread through trade networks…"></textarea>
+    </div>
+
+    <!-- Buttons -->
+    <div class="btn-row" style="margin-top:28px;flex-direction:column;align-items:center;gap:10px;">
+      <button class="btn btn-big" onclick="window.print()">🖨 PRINT / SAVE AS PDF</button>
+      <div style="font-size:15px;color:var(--dim);text-align:center;line-height:1.5;max-width:520px;">
+        Submit your PDF to your teacher's <strong style="color:var(--text);">"Indian Ocean Trade Reflection"</strong> assignment on Schoology to earn credit!
+      </div>
+      <button class="btn" style="font-size:8px;margin-top:6px;" onclick="backFromReflection()">◀ BACK TO GAME</button>
+    </div>
+
   </div>
 </div>
 
@@ -1094,6 +1246,20 @@ function openLog(){
 }
 function closeLog(){
   showScreen(_logReturnScreen || 'market');
+}
+
+let _reflectionReturnScreen = 'home';
+function showReflection(from){
+  _reflectionReturnScreen = from || 'home';
+  // Pre-fill route if available
+  const routeEl = document.getElementById('ref-route');
+  if(routeEl && G && G.homePort && G.destPort){
+    if(!routeEl.value) routeEl.value = G.homePort + ' → ' + G.destPort;
+  }
+  showScreen('reflection');
+}
+function backFromReflection(){
+  showScreen(_reflectionReturnScreen);
 }
 
 function goToTitle(){
