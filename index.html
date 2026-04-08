@@ -1095,10 +1095,24 @@ const DID_YOU_KNOW = [
   "The Black Death may have spread along the Indian Ocean trade routes — historians believe the plague that killed up to half of Europe's population in the 1340s traveled from Central Asia through trade networks, moving along the same routes used by spice merchants before reaching the Mediterranean.",
   "Vasco da Gama's arrival in Calicut in 1498 shocked local merchants — when the Portuguese arrived, the Arab and Indian merchants who dominated Calicut's trade were stunned. They had never imagined Europeans could navigate directly to the source of spices — and they correctly understood it would change everything."
 ];
+// Shuffle DYK facts once at load so each session sees a different order
+(function shuffleDYK(){
+  for(let i = DID_YOU_KNOW.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [DID_YOU_KNOW[i], DID_YOU_KNOW[j]] = [DID_YOU_KNOW[j], DID_YOU_KNOW[i]];
+  }
+})();
 let _dykIndex = 0;
 function showDidYouKnow(callback){
-  const fact = DID_YOU_KNOW[_dykIndex % DID_YOU_KNOW.length];
-  _dykIndex++;
+  // Re-shuffle when the deck is exhausted so repeat plays stay varied
+  if(_dykIndex >= DID_YOU_KNOW.length){
+    _dykIndex = 0;
+    for(let i = DID_YOU_KNOW.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [DID_YOU_KNOW[i], DID_YOU_KNOW[j]] = [DID_YOU_KNOW[j], DID_YOU_KNOW[i]];
+    }
+  }
+  const fact = DID_YOU_KNOW[_dykIndex++];
   document.getElementById('dyk-text').textContent = fact;
   const bar = document.getElementById('dyk-bar');
   const counter = document.getElementById('dyk-counter');
