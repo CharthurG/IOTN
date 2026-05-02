@@ -340,7 +340,7 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
         <circle cx="808" cy="198" r="8" fill="#f0c040" stroke="#000" stroke-width="2"/>
         <text x="821" y="193" class="port-label">GUANGZHOU</text>
         <!-- Ship emoji -->
-        <text id="ship" x="57" y="205" style="font-size:22px;transition:all 1.8s ease-in-out;">⛵</text>
+        <text id="ship" x="0" y="0" style="font-size:22px;">⛵</text>
       </svg>
     </div>
 
@@ -858,12 +858,12 @@ const LOCAL_GOODS = {
 };
 
 const SELL_PRICES = {
-  'Cairo':   {'Nutmeg':{p:150,u:'crate'},'Cloves and Cinnamon':{p:150,u:'crate'},'Pepper':{p:75,u:'crate'},'Gold':{p:300,u:'crate'},'Silk':{p:75,u:'bolt'},'Cotton Textiles':{p:10,u:'bolt'},'Porcelain':{p:125,u:'crate'},'Tea':{p:150,u:'crate'},'Lapis Lazuli':{p:600,u:'crate'},'Ivory':{p:150,u:'tusk'},'Precious Stones':{p:750,u:'crate'},'Saffron':{p:200,u:'crate'}},
-  'Calicut': {'Gold':{p:400,u:'crate'},'Silk':{p:50,u:'bolt'},'Porcelain':{p:100,u:'crate'},'Cloves and Cinnamon':{p:100,u:'crate'},'Perfumes':{p:100,u:'crate'},'Iron':{p:100,u:'bar'},'Tea':{p:150,u:'crate'},'Saffron':{p:125,u:'crate'}},
-  'Guangzhou':  {'Cloves and Cinnamon':{p:75,u:'crate'},'Ivory':{p:300,u:'tusk'},'Gold':{p:400,u:'crate'},'Pepper':{p:100,u:'crate'},'Glassware':{p:200,u:'crate'},'Cotton Textiles':{p:15,u:'bolt'},'Saffron':{p:200,u:'crate'},'Precious Stones':{p:800,u:'crate'}},
-  'Hormuz':  {'Cloves and Cinnamon':{p:150,u:'crate'},'Nutmeg':{p:150,u:'crate'},'Cotton Textiles':{p:15,u:'bolt'},'Iron':{p:75,u:'bar'},'Porcelain':{p:125,u:'crate'},'Tea':{p:150,u:'crate'},'Gold':{p:300,u:'crate'},'Pepper':{p:75,u:'crate'},'Silk':{p:40,u:'bolt'},'Ivory':{p:200,u:'tusk'}},
-  'Kilwa':   {'Cotton Textiles':{p:15,u:'bolt'},'Pepper':{p:75,u:'crate'},'Cloves and Cinnamon':{p:150,u:'crate'},'Precious Stones':{p:750,u:'crate'},'Porcelain':{p:150,u:'crate'},'Glassware':{p:150,u:'crate'},'Silk':{p:50,u:'bolt'},'Saffron':{p:200,u:'crate'}},
-  'Malacca': {'Cotton Textiles':{p:10,u:'bolt'},'Gold':{p:350,u:'crate'},'Ivory':{p:200,u:'tusk'},'Porcelain':{p:100,u:'crate'},'Silk':{p:40,u:'bolt'},'Precious Stones':{p:650,u:'crate'},'Tea':{p:125,u:'crate'},'Iron':{p:75,u:'bar'},'Saffron':{p:200,u:'crate'}}
+  'Cairo':      {'Nutmeg':{p:150,u:'crate'},'Cloves and Cinnamon':{p:150,u:'crate'},'Pepper':{p:75,u:'crate'},'Gold':{p:300,u:'crate'},'Silk':{p:75,u:'bolt'},'Cotton Textiles':{p:10,u:'bolt'},'Porcelain':{p:125,u:'crate'},'Tea':{p:150,u:'crate'},'Lapis Lazuli':{p:650,u:'crate'},'Ivory':{p:150,u:'tusk'},'Precious Stones':{p:750,u:'crate'},'Saffron':{p:200,u:'crate'},'Perfumes':{p:65,u:'crate'}},
+  'Calicut':    {'Gold':{p:400,u:'crate'},'Silk':{p:50,u:'bolt'},'Porcelain':{p:100,u:'crate'},'Cloves and Cinnamon':{p:100,u:'crate'},'Perfumes':{p:65,u:'crate'},'Iron':{p:100,u:'bar'},'Tea':{p:150,u:'crate'},'Saffron':{p:125,u:'crate'},'Lapis Lazuli':{p:650,u:'crate'}},
+  'Guangzhou':  {'Cloves and Cinnamon':{p:75,u:'crate'},'Ivory':{p:300,u:'tusk'},'Gold':{p:400,u:'crate'},'Pepper':{p:100,u:'crate'},'Glassware':{p:200,u:'crate'},'Cotton Textiles':{p:15,u:'bolt'},'Saffron':{p:200,u:'crate'},'Precious Stones':{p:800,u:'crate'},'Lapis Lazuli':{p:650,u:'crate'},'Perfumes':{p:65,u:'crate'}},
+  'Hormuz':     {'Cloves and Cinnamon':{p:150,u:'crate'},'Nutmeg':{p:150,u:'crate'},'Cotton Textiles':{p:15,u:'bolt'},'Iron':{p:75,u:'bar'},'Porcelain':{p:125,u:'crate'},'Tea':{p:150,u:'crate'},'Gold':{p:300,u:'crate'},'Pepper':{p:75,u:'crate'},'Silk':{p:40,u:'bolt'},'Ivory':{p:200,u:'tusk'},'Lapis Lazuli':{p:650,u:'crate'},'Perfumes':{p:65,u:'crate'}},
+  'Kilwa':      {'Cotton Textiles':{p:15,u:'bolt'},'Pepper':{p:75,u:'crate'},'Cloves and Cinnamon':{p:150,u:'crate'},'Precious Stones':{p:750,u:'crate'},'Porcelain':{p:150,u:'crate'},'Glassware':{p:150,u:'crate'},'Silk':{p:50,u:'bolt'},'Saffron':{p:200,u:'crate'},'Lapis Lazuli':{p:650,u:'crate'},'Perfumes':{p:65,u:'crate'}},
+  'Malacca':    {'Cotton Textiles':{p:10,u:'bolt'},'Gold':{p:350,u:'crate'},'Ivory':{p:200,u:'tusk'},'Porcelain':{p:100,u:'crate'},'Silk':{p:40,u:'bolt'},'Precious Stones':{p:650,u:'crate'},'Tea':{p:125,u:'crate'},'Iron':{p:75,u:'bar'},'Saffron':{p:200,u:'crate'},'Lapis Lazuli':{p:650,u:'crate'},'Perfumes':{p:65,u:'crate'}}
 };
 
 // CREW DEATH REASONS — used for both event-driven and secondary crew losses
@@ -1302,15 +1302,30 @@ function moveShip(port){
 
 function animateShip(from, to, cb){
   const ship = document.getElementById('ship');
-  const [fx,fy] = PORT_COORDS[from] || [80,65];
-  const [tx,ty] = PORT_COORDS[to]   || [80,65];
-  ship.setAttribute('x', fx - 8);
-  ship.setAttribute('y', fy - 20);
-  setTimeout(()=>{
-    ship.setAttribute('x', tx - 8);
-    ship.setAttribute('y', ty - 20);
-    if(cb) setTimeout(cb, 1900);
-  }, 300);
+  const waypoints = getVoyagePath(from, to);
+  const TOTAL_MS = 2200;
+  const segMs = Math.round(TOTAL_MS / Math.max(waypoints.length - 1, 1));
+
+  // Snap to start with no transition
+  ship.style.transition = 'none';
+  ship.style.transform = 'translate(' + (waypoints[0][0] - 11) + 'px, ' + (waypoints[0][1] - 22) + 'px)';
+
+  // Force reflow so the snap registers before animation begins
+  ship.getBoundingClientRect();
+
+  function stepTo(i){
+    if(i >= waypoints.length){
+      if(cb) setTimeout(cb, 200);
+      return;
+    }
+    const [x, y] = waypoints[i];
+    const easing = (i === waypoints.length - 1) ? 'ease-out' : 'linear';
+    ship.style.transition = 'transform ' + segMs + 'ms ' + easing;
+    ship.style.transform = 'translate(' + (x - 11) + 'px, ' + (y - 22) + 'px)';
+    setTimeout(() => stepTo(i + 1), segMs);
+  }
+
+  setTimeout(() => stepTo(1), 80);
 }
 
 function openVoyageScreen(from, to, onComplete){
