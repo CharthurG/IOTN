@@ -59,12 +59,12 @@ input[type=text],input[type=number],label,
 
 /* MAP */
 #map-wrap{position:relative;width:100%;border:3px solid var(--border);overflow:hidden;}
-.port-label{font-family:'Press Start 2P',monospace;font-size:9px;fill:#f0c040;pointer-events:none;text-shadow:1px 1px #000;}
+.port-label{font-family:'Press Start 2P',monospace;font-size:9px;fill:#f0c040;pointer-events:none;paint-order:stroke;stroke:#000;stroke-width:2px;}
 #ship{transition:all 1.8s ease-in-out;}
 
 /* PANELS */
 .panel{background:var(--panel);border:2px solid var(--border);padding:16px;margin-bottom:10px;}
-.panel-title{color:var(--gold);font-size:13px;margin-bottom:14px;text-align:center;text-shadow:2px 2px var(--dkgold);letter-spacing:1px;}
+.panel-title{color:var(--gold);font-size:13px;margin-bottom:14px;text-align:center;letter-spacing:1px;}
 .panel-subtitle{color:var(--dim);font-size:15px;margin-bottom:12px;text-align:center;}
 
 /* BUTTONS */
@@ -155,7 +155,7 @@ label{display:block;color:var(--dim);font-size:9px;margin-bottom:3px;}
 
 /* TITLE */
 #screen-title{text-align:center;}
-.game-title{color:var(--gold);font-size:16px;line-height:2.2;margin:10px 0;text-shadow:3px 3px #000;}
+.game-title{color:var(--gold);font-size:16px;line-height:2.2;margin:10px 0;}
 .game-sub{color:var(--dim);font-size:9px;margin-bottom:16px;}
 .blink{animation:blink 1s step-end infinite;}
 @keyframes blink{50%{opacity:0;}}
